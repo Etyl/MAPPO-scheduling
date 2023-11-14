@@ -78,6 +78,7 @@ for event in eventsLogged:
     plt.errorbar(events_avg[event], consumption_avg , yerr=consumption_var, fmt='o', capsize=5, markersize=8, label=event)
     plt.xlabel(event)
     plt.ylabel('Consumption (W)')
+    plt.savefig(f"./graphs/perf-consumption-{event}.png")
 
 
 lr = stats.linregress(events_avg["instructions"], consumption_avg)
@@ -95,6 +96,5 @@ dz = zpos
 
 ax.bar3d(xpos, ypos, 0, dx, dy, dz, zsort='average')
 
-
-plt.show()
+plt.savefig("./graphs/perf-consumption-3d.png")
 
