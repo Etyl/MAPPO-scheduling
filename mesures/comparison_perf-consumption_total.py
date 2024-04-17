@@ -74,8 +74,10 @@ print(events_avg["branch-misses"])
 # Create scatter plot with error bars
 for event in eventsLogged:
     avg = events_avg[event]
-    plt.figure()
+    f, ax = plt.subplots(1)
     plt.errorbar(events_avg[event], consumption_avg , yerr=consumption_var, fmt='o', capsize=5, markersize=8, label=event)
+    plt.grid()
+    ax.set_ylim(ymin=0)
     plt.xlabel(event)
     plt.ylabel('Consumption (W)')
     plt.savefig(f"./graphs/perf-consumption-{event}.png")

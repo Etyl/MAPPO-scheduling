@@ -18,10 +18,12 @@ for row in f:
     events[line[2]].append(int(line[1]))
 
 for event in eventsLogged:
-    plt.figure()
-    plt.plot(T, events[event])
+    f, ax = plt.subplots(1)
+    ax.plot(T, events[event])
+    plt.grid()
     plt.xlabel("Time (s)")
     plt.ylabel(event)
+    ax.set_ylim(bottom=0)
     plt.title(event)
 
 plt.show()
