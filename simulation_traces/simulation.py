@@ -2,8 +2,8 @@ from trace_generator import TraceGenerator
 from math import *
 from infra import PM, App
 import numpy as np
-import matplotlib.pyplot as plt
-from collections import deque
+from predictor import Predictor
+from constants import *
 
 
 SCALE = 20
@@ -13,8 +13,11 @@ LAMBDA = 0.1 # TODO find a good value
 class Simulation:
 
     def __init__(self) -> None:
+        self.predictor : Predictor = Predictor()
         self.traceGenerator : TraceGenerator = TraceGenerator()
         self.requests : list[int] = []
+        self.nextRequests : list[int] = []
+        self.requestsHistory : list[np.ndarray[int]] = []
         self.PMs = [PM(i) for i in range(4)]
         self.apps : list[App] = []
     
@@ -31,7 +34,19 @@ class Simulation:
         self.apps.append(serverApp)
 
 
+    def predictRequests(self) -> None:
+        formatRequests = np.zeros(N_APPS)
+        for request in self.requests:
+            formatRequests[request] += 1
+        self.requestsHistory.append(formatRequests)
+        self.nextRequests = self.predictor.predict(self.requestsHistory)
+        
+    
     def getState(self) -> list[float]:
+        """
+        Can only be called once per tick (or change predictRequests)
+        """
+        self.predictRequests()
         state = []
         for pm in self.PMs:
             state.append(pm.CPU_load)
@@ -40,11 +55,11 @@ class Simulation:
         for app in self.apps:
             state.append(app.consumption_CPU)
             state.append(app.consumption_BW)
-            state.append(0) # TODO number of requests for this app
+            state.append(self.nextRequests[app.id])
             state.append(app.consumption_run)
             state.append(app.consumption_start)
             for pm in self.PMs:
-                state.append(0) # TODO number of requests for this app on this PM
+                state.append(pm.currentApps[app.id])
 
         return state
 
