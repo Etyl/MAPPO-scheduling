@@ -1,4 +1,3 @@
-from new_types import State
 
         
 class Scheduler:

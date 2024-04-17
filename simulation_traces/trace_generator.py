@@ -1,4 +1,4 @@
-from new_types import App
+from infra import App
 import numpy as np
 
 
@@ -14,7 +14,7 @@ class TraceGenerator:
             return
         self.apps.append(app)
 
-    def generate(self, apps : list[App]):
+    def generate(self, apps : list[App]) -> list[int]:
         requests = []
         for app in apps:
             requests = requests + [app.id]*app.distribution(self.tick)

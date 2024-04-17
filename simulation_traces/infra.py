@@ -1,76 +1,67 @@
-from new_types import App
+from collections import deque
 
+class App:
+    def __init__(self, id, consumption_CPU = 0, consumption_BW = 0, consumption_run = 0, consumption_start = 0, distribution = lambda x: 0) -> None:
+        self.id = id
 
+        self.consumption_CPU = consumption_CPU # k instructions needed to execute a request
+        self.consumption_BW = consumption_BW # kilo bytes needed to execute a request
 
-class SBC:
-    def __init__(self, id) -> None:
-        self.id = 0
-        self.load_CPU = 0
-        self.load_IO = 0
-        self.load_storage = 0
-        self.currentApps = []
-        self.usedApps = []
-        self.startingApps = {}
-        self.appRef : dict[App] = {}
+        self.consumption_run = consumption_run # k instructions needed to run the service
+        self.consumption_start = consumption_start # k instructions needed to start the service
+
+        self.distribution = distribution
+
+class PM:
+    def __init__(self, id, n_apps, cpu = 0, bw = 0, consumption_idle = 0, consumption_max = 0) -> None:
+        self.id = id
+
+        self.CPU = cpu # max k instructions per second
+        self.BW = bw # max kilo bytes per second
+
+        self.CPU_load = 0 # current k instructions per second
+        self.BW_load = 0 # current kilo bytes per second
+
+        self.consumption_idle = consumption_idle # energy consumed when idle
+        self.consumption_max = consumption_max # energy consumed when at max load
+
+        self.n_apps = n_apps
+        self.currentApps = [0]*n_apps
+        self.lastApps = [0]*n_apps
 
     def powerUsage(self):
-        if self.load_CPU == 0 and self.load_IO == 0:
+        if self.CPU_load == 0 and self.BW_load == 0:
             return 0
-        return 2 + 2*self.load_CPU + 0.5*self.load_IO
+        
+        energy = self.consumption_idle
+        energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/self.CPU) + 0.2*(self.BW_load/self.BW))
+
+        for app,old_app in zip(self.currentApps, self.lastApps):
+            if app != 0:
+                energy += app.consumption_run
+                if old_app != 0:
+                    energy += app.consumption_start
+
+        return energy
     
     def resetLoad(self):
-        self.load_CPU = 0
-        self.load_IO = 0
+        self.CPU_load = 0
+        self.BW_load = 0
         
-        self.currentApps = self.usedApps.copy()
-        self.usedApps = []
-
-        removedApps = []
-        for app in self.startingApps:
-            self.startingApps[app] -= 1
-            if self.startingApps[app] == 0:
-                self.currentApps.append(app)
-                removedApps.append(app)
-            else:
-                self.load_CPU += self.appRef[app].consumption_CPU_start
-                self.load_IO += self.appRef[app].consumption_IO_start
-        for app in removedApps:
-            self.startingApps.pop(app)
+        self.usedApps = self.currentApps.copy()
+        self.currentApps = [0]*self.n_apps
 
     def addRequest(self, app: App):
-        self.load_CPU += app.consumption_CPU
-        self.load_IO += app.consumption_IO
+        self.currentApps[app.id] += 1
+
+        self.CPU_load += app.consumption_CPU
+        self.BW_load += app.consumption_BW
         
-        if app.id not in self.currentApps and app.id not in self.startingApps:
-            self.startingApps[app.id] = 10
-            self.appRef[app.id] = app
-            return
-        
-        if app.id in self.startingApps:
-            return
 
-        if app.id not in self.usedApps:
-            self.usedApps.append(app.id)
+class SBC(PM):
+    def __init__(self, id) -> None:
+        super().__init__(id, 1000, 100, 2, 4)
 
-        self.load_CPU += app.consumption_CPU_start
-        self.load_IO += app.consumption_IO_start
-        self.load_storage += app.consumption_storage_start
-
-
-
-class Cloud:
-    def __init__(self) -> None:
-        self.consumption_CPU = 0
-        self.consumption_IO = 0
-        self.load_CPU = 0
-        self.load_IO = 0
-        self.load_storage = 0
-    
-    def resetLoad(self):
-        self.load_CPU = 0
-        self.load_IO = 0
-
-    def addRequest(self, app: App):
-        self.load_CPU += app.consumption_CPU
-        self.load_IO += app.consumption_IO
-        self.load_storage += app.consumption_storage
+class Cloud(PM):
+    def __init__(self, id) -> None:
+        super().__init__(id, 100000, 10000, 10, 1000)
