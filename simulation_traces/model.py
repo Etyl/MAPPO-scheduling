@@ -3,17 +3,26 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
+from constants import *
 
 class QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
-        self.linear1 = nn.ReLU(input_size, hidden_size)
-        self.linear2 = nn.ReLU(hidden_size, output_size)
+        self.flatten = nn.Flatten()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size),
+        )
+
 
     def forward(self, x):
-        x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        return x
+        logits = self.linear_relu_stack(x)
+        output = nn.Softmax(dim=1)(logits.view(-1, N_APPS)) # Apply softmax every N_APPS packets
+        output = output.view(logits.shape) # Reshape to original shape
+        return output
 
     def save(self, file_name='model.pth'):
         model_folder_path = './model'
