@@ -1,7 +1,6 @@
 from trace_generator import TraceGenerator
 from math import *
 from infra import PM, App
-from scheduler import Scheduler
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
@@ -15,7 +14,6 @@ class Simulation:
 
     def __init__(self) -> None:
         self.traceGenerator : TraceGenerator = TraceGenerator()
-        self.scheduler : Scheduler = Scheduler()
         self.requests : list[int] = []
         self.PMs = [PM(i) for i in range(4)]
         self.apps : list[App] = []
