@@ -4,6 +4,7 @@ import numpy as np
 from collections import deque
 from simulation import Simulation
 from constants import *
+from model import QNet, QTrainer
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -16,7 +17,7 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11, 256, 3)
+        self.model = QNet(6*N_PM+5*N_APPS+N_APPS*N_PM, 512, N_APPS*N_PM)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
 
