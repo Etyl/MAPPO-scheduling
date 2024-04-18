@@ -20,7 +20,7 @@ class QNet(nn.Module):
 
     def forward(self, x):
         logits = self.linear_relu_stack(x)
-        output = nn.Softmax(dim=1)(logits.view(-1, N_APPS)) # Apply softmax every N_APPS packets
+        output = nn.Softmax(dim=1)(logits.view(-1, N_PM)) # Apply softmax every N_APPS packets
         output = output.view(logits.shape) # Reshape to original shape
         return output
 

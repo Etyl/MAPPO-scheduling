@@ -34,13 +34,14 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 150 - self.n_games # TODO change epsilon
+        self.epsilon = 350 - self.n_games # TODO change epsilon
+        self.n_games += 1
         final_move = np.zeros(N_APPS*N_PM)
         
         if random.randint(0, 200) < self.epsilon:
             for i in range(N_APPS):
                 sum = 0
-                for j in range(N_PM):
+                for j in range(1,N_PM):
                     if np.random.rand() < 0.5:
                         final_move[i*N_PM+j] = 1
                         sum += 1
@@ -48,21 +49,21 @@ class Agent:
                     continue
                 for j in range(N_PM):
                     final_move[i*N_PM+j] /= sum
-                    
+            
         else:
             state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model(state0)
-            move = torch.argmax(prediction).item()
-            final_move[move] = 1
+            final_move = self.model(state0).detach().numpy()
 
         return final_move
 
 
 def train():
     rewards = []
+    pm_usage = []
+    requestsHistory = []
     agent = Agent()
     simulation = Simulation()
-    for _ in tqdm.tqdm(range(10000)):
+    for _ in tqdm.tqdm(range(3000)):
         # get old state
         state_old = agent.get_state(simulation)
 
@@ -70,7 +71,7 @@ def train():
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward = simulation.tick(final_move) # TODO get more data to plot
+        reward, pm_requests, requests = simulation.tick(final_move) # TODO get more data to plot
         state_new = agent.get_state(simulation)
 
         # train short memory
@@ -83,8 +84,23 @@ def train():
 
         
         rewards.append(reward)
+        pm_usage.append(pm_requests)
+        requestsHistory.append(requests)
     
-    plt.plot(rewards)
+    pm_usage = np.array(pm_usage)
+    for i in range(N_PM):
+        plt.figure()
+        plt.title(f'CPU load of PM {i}')
+        plt.plot(pm_usage[200:,i], 'b')
+        plt.plot([1000000]*(len(pm_usage)-200), 'r--')
+
+    requestsHistory = np.array(requestsHistory)
+    plt.figure()
+    for i in range(N_APPS):
+        plt.plot(requestsHistory[200:,i], 'b')
+
+    plt.figure()
+    plt.plot(rewards[200:])
     plt.show()
 
 

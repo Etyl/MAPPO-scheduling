@@ -6,9 +6,9 @@ from predictor import Predictor
 from constants import *
 
 
-SCALE = 20
+SCALE = 200
 LAMBDA = 0.1 # TODO find a good value
-
+LAMBDA_2 = 0.001 # TODO find a good value
 
 class Simulation:
 
@@ -20,15 +20,15 @@ class Simulation:
         self.requestsHistory : list[np.ndarray[int]] = []
         self.apps : list[App] = []
     
-        serverApp = App(0, 100, 10, 500, 500)
+        serverApp = App(0, 1000, 10, 0, 0)
         serverApp.distribution = lambda x: int(SCALE*sin(x/(2*pi*10))+1.2*SCALE)
         self.apps.append(serverApp)
 
-        serverApp = App(1, 100, 10, 500, 500)
+        serverApp = App(1, 1000, 10, 0, 0)
         serverApp.distribution = lambda x: int(0.6*SCALE*sin(x/(2*pi*10)+140)+SCALE)
         self.apps.append(serverApp)
 
-        serverApp = App(2, 100, 10, 500, 500)
+        serverApp = App(2, 1000, 10, 0, 0)
         serverApp.distribution = lambda x: int(0.3*SCALE*sin(x/(2*pi*10)+180)+0.3*SCALE)
         self.apps.append(serverApp)
 
@@ -69,7 +69,7 @@ class Simulation:
         return state
 
 
-    def tick(self, action : list[float]) -> float:
+    def tick(self, action : list[float]):
         self.requests = self.traceGenerator.generate(self.apps)
         action = np.array(action).reshape((N_APPS, N_PM))
 
@@ -90,6 +90,16 @@ class Simulation:
         
         QoS = 0
         # TODO get QoS
+        
+        # apply penalty for QoS if CPU load is higher than CPU capacity
+        QoS_penalty = 0
+        for pm in self.PMs:
+            if pm.CPU_load > pm.CPU*T:
+                QoS_penalty += pm.CPU_load - pm.CPU*T
 
-        return -energy_cost - LAMBDA*QoS
+        reward = -energy_cost - LAMBDA*QoS - np.exp(LAMBDA_2*QoS_penalty)
+        pm_requests = [pm.CPU_load for pm in self.PMs]
+        requests = self.requestsHistory[-1]
+
+        return reward, pm_requests, requests
         

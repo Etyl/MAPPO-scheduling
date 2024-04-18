@@ -60,8 +60,8 @@ class PM:
 
 class SBC(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 1000, 100, 2, 4)
+        super().__init__(id, apps, 1000000, 10000, 2, 4)
 
 class Cloud(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 100000, 10000, 10, 1000)
+        super().__init__(id, apps, 1000000, 1000000, 100, 1000)
