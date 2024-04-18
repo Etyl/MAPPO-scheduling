@@ -1,6 +1,6 @@
 from trace_generator import TraceGenerator
 from math import *
-from infra import PM, App
+from infra import PM, App, SBC, Cloud
 import numpy as np
 from predictor import Predictor
 from constants import *
@@ -18,7 +18,6 @@ class Simulation:
         self.requests : list[int] = []
         self.nextRequests : list[int] = []
         self.requestsHistory : list[np.ndarray[int]] = []
-        self.PMs = [PM(i) for i in range(4)]
         self.apps : list[App] = []
     
         serverApp = App(0, 100, 10, 500, 500)
@@ -32,6 +31,8 @@ class Simulation:
         serverApp = App(2, 100, 10, 500, 500)
         serverApp.distribution = lambda x: int(0.3*SCALE*sin(x/(2*pi*10)+180)+0.3*SCALE)
         self.apps.append(serverApp)
+
+        self.PMs = [Cloud(0,self.apps)] + [SBC(i,self.apps) for i in range(1,5)]
 
 
     def predictRequests(self) -> None:
@@ -49,8 +50,12 @@ class Simulation:
         self.predictRequests()
         state = []
         for pm in self.PMs:
-            state.append(pm.CPU_load)
-            state.append(pm.BW_load)
+            state.append(pm.CPU)
+            state.append(int(pm.CPU_load/T))
+            state.append(pm.BW)
+            state.append(int(pm.BW_load/T))
+            state.append(pm.consumption_idle)
+            state.append(pm.consumption_max)
 
         for app in self.apps:
             state.append(app.consumption_CPU)
@@ -66,12 +71,17 @@ class Simulation:
 
     def tick(self, action : list[float]) -> float:
         self.requests = self.traceGenerator.generate(self.apps)
+        action = np.array(action).reshape((N_APPS, N_PM))
 
         for pm in self.PMs:
             pm.resetLoad()
 
         for request in self.requests:
-            pm_id = np.random.choice(range(len(self.PMs)), p=action[request])
+            pm_id = 0
+            if np.sum(action[request]) == 0:
+                pm_id = np.random.choice(range(len(self.PMs)))
+            else:
+                pm_id = np.random.choice(range(len(self.PMs)), p=action[request])
             self.PMs[pm_id].addRequest(self.apps[request])
         
         energy_cost = 0

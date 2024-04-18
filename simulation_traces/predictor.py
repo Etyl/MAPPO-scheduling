@@ -13,4 +13,4 @@ class Predictor:
         if len(requests) < 2:
             return requests[-1]
 
-        return np.rint(requests[-1] + (requests[-1] - requests[-2])/T, astype=int)
+        return np.rint(requests[-1] + (requests[-1] - requests[-2])/T).astype(int)

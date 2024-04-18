@@ -13,7 +13,7 @@ class App:
         self.distribution = distribution
 
 class PM:
-    def __init__(self, id, n_apps, cpu = 0, bw = 0, consumption_idle = 0, consumption_max = 0) -> None:
+    def __init__(self, id, apps:list[App], cpu = 0, bw = 0, consumption_idle = 0, consumption_max = 0) -> None:
         self.id = id
 
         self.CPU = cpu # max k instructions per second
@@ -25,9 +25,9 @@ class PM:
         self.consumption_idle = consumption_idle # energy consumed when idle
         self.consumption_max = consumption_max # energy consumed when at max load
 
-        self.n_apps = n_apps
-        self.currentApps = [0]*n_apps
-        self.lastApps = [0]*n_apps
+        self.apps = apps
+        self.currentApps = [0]*len(apps)
+        self.lastApps = [0]*len(apps)
 
     def powerUsage(self):
         if self.CPU_load == 0 and self.BW_load == 0:
@@ -36,11 +36,11 @@ class PM:
         energy = self.consumption_idle
         energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/self.CPU) + 0.2*(self.BW_load/self.BW))
 
-        for app,old_app in zip(self.currentApps, self.lastApps):
+        for id, (app, old_app) in enumerate(zip(self.currentApps, self.lastApps)):
             if app != 0:
-                energy += app.consumption_run
+                energy += self.apps[id].consumption_run
                 if old_app != 0:
-                    energy += app.consumption_start
+                    energy += self.apps[id].consumption_start
 
         return energy
     
@@ -49,7 +49,7 @@ class PM:
         self.BW_load = 0
         
         self.usedApps = self.currentApps.copy()
-        self.currentApps = [0]*self.n_apps
+        self.currentApps = [0]*len(self.apps)
 
     def addRequest(self, app: App):
         self.currentApps[app.id] += 1
@@ -59,9 +59,9 @@ class PM:
         
 
 class SBC(PM):
-    def __init__(self, id) -> None:
-        super().__init__(id, 1000, 100, 2, 4)
+    def __init__(self, id, apps) -> None:
+        super().__init__(id, apps, 1000, 100, 2, 4)
 
 class Cloud(PM):
-    def __init__(self, id) -> None:
-        super().__init__(id, 100000, 10000, 10, 1000)
+    def __init__(self, id, apps) -> None:
+        super().__init__(id, apps, 100000, 10000, 10, 1000)

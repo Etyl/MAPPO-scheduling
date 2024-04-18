@@ -41,7 +41,7 @@ class Agent:
                 for j in range(N_PM):
                     if np.random.rand() < 0.5:
                         final_move[i*N_PM+j] = 1
-                        c += 1
+                        sum += 1
                 if sum == 0:
                     continue
                 for j in range(N_PM):
@@ -57,6 +57,7 @@ class Agent:
 
 
 def train():
+    rewards = []
     agent = Agent()
     simulation = Simulation()
     while True:
@@ -75,6 +76,12 @@ def train():
 
         # remember
         agent.remember(state_old, final_move, reward, state_new)
+
+        # TODO make long term memory
+
+        
+        rewards.append(reward)
+            
 
 
 if __name__ == '__main__':
