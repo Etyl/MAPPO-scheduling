@@ -91,5 +91,5 @@ class Simulation:
         QoS = 0
         # TODO get QoS
 
-        return energy_cost + LAMBDA*QoS
+        return -energy_cost - LAMBDA*QoS
         

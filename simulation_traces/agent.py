@@ -5,6 +5,8 @@ from collections import deque
 from simulation import Simulation
 from constants import *
 from model import QNet, QTrainer
+import matplotlib.pyplot as plt
+import tqdm
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -60,7 +62,7 @@ def train():
     rewards = []
     agent = Agent()
     simulation = Simulation()
-    while True:
+    for _ in tqdm.tqdm(range(10000)):
         # get old state
         state_old = agent.get_state(simulation)
 
@@ -81,7 +83,10 @@ def train():
 
         
         rewards.append(reward)
-            
+    
+    plt.plot(rewards)
+    plt.show()
+
 
 
 if __name__ == '__main__':

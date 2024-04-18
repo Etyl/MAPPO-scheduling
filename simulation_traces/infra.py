@@ -1,4 +1,4 @@
-from collections import deque
+from constants import T
 
 class App:
     def __init__(self, id, consumption_CPU = 0, consumption_BW = 0, consumption_run = 0, consumption_start = 0, distribution = lambda x: 0) -> None:
@@ -19,8 +19,8 @@ class PM:
         self.CPU = cpu # max k instructions per second
         self.BW = bw # max kilo bytes per second
 
-        self.CPU_load = 0 # current k instructions per second
-        self.BW_load = 0 # current kilo bytes per second
+        self.CPU_load = 0 # current k instructions in period T
+        self.BW_load = 0 # current kilo bytes in period T
 
         self.consumption_idle = consumption_idle # energy consumed when idle
         self.consumption_max = consumption_max # energy consumed when at max load
@@ -34,7 +34,7 @@ class PM:
             return 0
         
         energy = self.consumption_idle
-        energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/self.CPU) + 0.2*(self.BW_load/self.BW))
+        energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(T*self.CPU)) + 0.2*(self.BW_load/(T*self.BW)))
 
         for id, (app, old_app) in enumerate(zip(self.currentApps, self.lastApps)):
             if app != 0:
