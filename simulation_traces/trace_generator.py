@@ -8,6 +8,7 @@ class TraceGenerator:
 
     def __init__(self):
         self.tick : int = 0
+        self.requests : list[int] = []
 
     def addApp(self, app):
         if app is None:
@@ -15,10 +16,14 @@ class TraceGenerator:
         self.apps.append(app)
 
     def generate(self, apps : list[App]) -> list[int]:
-        requests = []
+        self.requests = [0]*len(apps)
         for app in apps:
-            requests = requests + [app.id]*app.distribution(self.tick)
+            self.requests[app.id] = app.distribution(self.tick)
         self.tick += 1
-        np.random.shuffle(requests)
-        return requests
+
+    def getRequest(self):
+        if sum(self.requests) == 0:
+            return None
+        
+        request = np.random.choice(range(len(self.requests)), p=[r/sum(self.requests) for r in self.requests])
 

@@ -70,13 +70,14 @@ class Simulation:
 
 
     def tick(self, action : list[float]):
-        self.requests = self.traceGenerator.generate(self.apps)
+        
+        self.traceGenerator.generate()
         action = np.array(action).reshape((N_APPS, N_PM))
 
         for pm in self.PMs:
             pm.resetLoad()
-
-        for request in self.requests:
+        request = self.traceGenerator.getRequest()
+        while request is not None:
             pm_id = 0
             if np.sum(action[request]) == 0:
                 pm_id = np.random.choice(range(len(self.PMs)))
