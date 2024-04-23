@@ -10,8 +10,14 @@ SCALE = 200
 LAMBDA = 0.1 # TODO find a good value
 LAMBDA_2 = 0.001 # TODO find a good value
 
-class Simulation:
 
+class Data:
+    def __init__(self):
+        self.requests : list[int] = None
+        self.pm_requests : list[int] = None
+        self.pm_apps : list[list[int]] = None
+
+class Simulation:
     def __init__(self) -> None:
         self.predictor : Predictor = Predictor()
         self.traceGenerator : TraceGenerator = TraceGenerator()
@@ -71,7 +77,8 @@ class Simulation:
 
     def tick(self, action : list[float]):
         
-        self.traceGenerator.generate()
+        self.traceGenerator.generate(self.apps)
+        self.requestsHistory.append(self.traceGenerator.requests)
         action = np.array(action).reshape((N_APPS, N_PM))
 
         for pm in self.PMs:
@@ -84,6 +91,8 @@ class Simulation:
             else:
                 pm_id = np.random.choice(range(len(self.PMs)), p=action[request])
             self.PMs[pm_id].addRequest(self.apps[request])
+
+            request = self.traceGenerator.getRequest()
         
         energy_cost = 0
         for pm in self.PMs:
@@ -99,8 +108,11 @@ class Simulation:
                 QoS_penalty += pm.CPU_load - pm.CPU*T
 
         reward = -energy_cost - LAMBDA*QoS - np.exp(LAMBDA_2*QoS_penalty)
-        pm_requests = [pm.CPU_load for pm in self.PMs]
-        requests = self.requestsHistory[-1]
 
-        return reward, pm_requests, requests
+        data = Data()
+        data.requests = self.requestsHistory[-1]
+        data.pm_requests = [pm.CPU_load for pm in self.PMs]
+        data.pm_apps = [pm.currentApps for pm in self.PMs]
+
+        return reward, data
         

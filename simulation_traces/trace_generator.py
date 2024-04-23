@@ -22,8 +22,11 @@ class TraceGenerator:
         self.tick += 1
 
     def getRequest(self):
-        if sum(self.requests) == 0:
+        s = sum(self.requests)
+        if s <= 0:
             return None
         
-        request = np.random.choice(range(len(self.requests)), p=[r/sum(self.requests) for r in self.requests])
+        request = np.random.choice(range(len(self.requests)), p=[r/s for r in self.requests])
+        self.requests[request] -= 1
+        return request
 
