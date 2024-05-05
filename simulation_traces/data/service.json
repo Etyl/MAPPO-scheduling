@@ -1,0 +1,23 @@
+[
+    {
+        "consumption_CPU" : 1000, 
+        "consumption_BW" : 10, 
+        "consumption_run" : 0, 
+        "consumption_start" : 0,
+        "distribution" : ["sin", 200, 240, 1, 0]
+    },
+    {
+        "consumption_CPU" : 1000, 
+        "consumption_BW" : 10, 
+        "consumption_run" : 0, 
+        "consumption_start" : 0,
+        "distribution" : ["sin", 120, 130, 1, 10]
+    },
+    {
+        "consumption_CPU" : 1000, 
+        "consumption_BW" : 10, 
+        "consumption_run" : 0, 
+        "consumption_start" : 0,
+        "distribution" : ["sin", 60, 30, 1, 12]
+    }
+]
