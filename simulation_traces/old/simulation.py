@@ -2,7 +2,7 @@ from trace_generator import TraceGenerator
 from math import *
 from infra import PM, App, SBC, Cloud
 import numpy as np
-from predictor import Predictor
+from simulation_traces.old.predictor import Predictor
 from constants import *
 
 
