@@ -5,7 +5,7 @@ import torch.optim as optim
 from supersuit import color_reduction_v0, frame_stack_v1, resize_v1
 from torch.distributions.categorical import Categorical
 
-from environment.scheduling_env import SchedulingEnv
+from pettingzoo.butterfly import pistonball_v6
 
 
 class Agent(nn.Module):
@@ -90,9 +90,14 @@ if __name__ == "__main__":
     total_episodes = 2
 
     """ ENV SETUP """
-    env = SchedulingEnv()
+    env = pistonball_v6.parallel_env(
+        render_mode="rgb_array", continuous=False, max_cycles=max_cycles
+    )
+    env = color_reduction_v0(env)
+    env = resize_v1(env, frame_size[0], frame_size[1])
+    env = frame_stack_v1(env, stack_size=stack_size)
     num_agents = len(env.possible_agents)
-    num_actions = env.action_space(env.possible_agents[0]).shape[0]
+    num_actions = env.action_space(env.possible_agents[0]).n
     observation_size = env.observation_space(env.possible_agents[0]).shape
 
     """ LEARNER SETUP """
@@ -102,7 +107,7 @@ if __name__ == "__main__":
     """ ALGO LOGIC: EPISODE STORAGE"""
     end_step = 0
     total_episodic_return = 0
-    rb_obs = torch.zeros((max_cycles, num_agents, stack_size)).to(device)
+    rb_obs = torch.zeros((max_cycles, num_agents, stack_size, *frame_size)).to(device)
     rb_actions = torch.zeros((max_cycles, num_agents)).to(device)
     rb_logprobs = torch.zeros((max_cycles, num_agents)).to(device)
     rb_rewards = torch.zeros((max_cycles, num_agents)).to(device)
@@ -242,22 +247,24 @@ if __name__ == "__main__":
         print("\n-------------------------------------------\n")
 
     """ RENDER THE POLICY """
-    env = SchedulingEnv()
+    env = pistonball_v6.parallel_env(render_mode="human", continuous=False)
+    env = color_reduction_v0(env)
+    env = resize_v1(env, 64, 64)
+    env = frame_stack_v1(env, stack_size=4)
 
     agent.eval()
 
     with torch.no_grad():
         # render 5 episodes out
         for episode in range(5):
+            print(f"Rendering episode {episode}")
             obs, infos = env.reset(seed=None)
             obs = batchify_obs(obs, device)
             terms = [False]
             truncs = [False]
-            step = 0
-            while not any(terms) and not any(truncs) and step < 1000:
+            while not any(terms) and not any(truncs):
                 actions, logprobs, _, values = agent.get_action_and_value(obs)
                 obs, rewards, terms, truncs, infos = env.step(unbatchify(actions, env))
                 obs = batchify_obs(obs, device)
                 terms = [terms[a] for a in terms]
                 truncs = [truncs[a] for a in truncs]
-                step += 1

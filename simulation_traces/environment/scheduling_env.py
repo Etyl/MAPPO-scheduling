@@ -33,29 +33,28 @@ class SchedulingEnv(ParallelEnv):
         self.nextRequests : list[int] = []
         self.requestsHistory : list[np.ndarray[int]] = []
         self.infra = Infra()
-        self.possible_agents = list(range(N_APPS))
+        self.possible_agents = list(map(str,range(N_APPS)))
         self.timestep = 0
 
     def reset(self, seed=None, options=None):
         """Reset set the environment to a starting point.
-
-        It needs to initialize the following attributes:
-        - agents
-        - timestamp
-        - prisoner x and y coordinates
-        - guard x and y coordinates
-        - escape x and y coordinates
-        - observation
-        - infos
-
         And must set up the environment so that render(), step(), and observe() can be called without issues.
         """
         self.agents = copy(self.possible_agents)
         self.timestep = random.randint(0, 100)
         self.infra.resetLoad()
+        self.requests = getRequests(self.timestep)
+
+        # Reset observations 
+        state = ()
+        state = state + self.infra.getLoadCPU()
+        state = state + self.infra.getLoadBW()
 
         observations = {
-            a: () for a in self.agents 
+            a: (
+                state + self.requests[a]
+            )
+            for a in self.agents
         }
 
         # Get dummy infos. Necessary for proper parallel_to_aec conversion
@@ -65,16 +64,6 @@ class SchedulingEnv(ParallelEnv):
 
     def step(self, actions):
         """Takes in an action for the current agent (specified by agent_selection).
-
-        Needs to update:
-        - prisoner x and y coordinates
-        - guard x and y coordinates
-        - terminations
-        - truncations
-        - rewards
-        - timestamp
-        - infos
-
         And any internal state used by observe() or render()
         """
         self.timestep += 1
@@ -88,7 +77,7 @@ class SchedulingEnv(ParallelEnv):
         self.infra.addRequests(self.requests, distribution)
 
         reward = (
-            -self.infra.getPowerUsage() 
+            - self.infra.getPowerUsage() 
             - LAMBDA*self.infra.getQoS()
             - np.exp(LAMBDA_2*self.infra.getQoS_penalty())) 
 
