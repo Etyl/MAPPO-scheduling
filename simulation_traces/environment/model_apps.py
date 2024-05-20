@@ -2,10 +2,12 @@ import json
 from math import sin, pi
 import numpy as np
 
+import os
+os.chdir(os.path.dirname(__file__))
 
 apps = []
 
-with open('./data/service.json', 'r') as file:
+with open('../data/service.json', 'r') as file:
     data = json.load(file)
     for service in data:
         apps.append(service)

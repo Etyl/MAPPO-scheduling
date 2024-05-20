@@ -3,16 +3,22 @@ import random
 from copy import copy
 
 import numpy as np
-from gymnasium.spaces import Discrete, MultiDiscrete
+from gymnasium.spaces import Box
 
 from pettingzoo import ParallelEnv
 
-from constants import *
-from model_apps import getRequests
-from model_infra import Infra
+import os
+os.chdir(os.path.dirname(__file__))
+print(os.getcwd())
 
+from environment.constants import *
+from environment.model_apps import getRequests, apps
+from environment.model_infra import Infra
 
-class CustomEnvironment(ParallelEnv):
+N_APPS = len(apps)
+N_INFRA = Infra().getInfraSize()
+
+class SchedulingEnv(ParallelEnv):
     """The metadata holds environment constants.
 
     The "name" metadata allows the environment to be pretty printed.
@@ -26,8 +32,8 @@ class CustomEnvironment(ParallelEnv):
         self.requests : list[int] = []
         self.nextRequests : list[int] = []
         self.requestsHistory : list[np.ndarray[int]] = []
-        self.agents = list(range(N_APPS))
         self.infra = Infra()
+        self.agents = list(range(N_APPS))
         self.timestep = 0
 
     def reset(self, seed=None, options=None):
@@ -115,20 +121,20 @@ class CustomEnvironment(ParallelEnv):
 
     def render(self):
         """Renders the environment."""
-        grid = np.full((7, 7), " ")
-        grid[self.prisoner_y, self.prisoner_x] = "P"
-        grid[self.guard_y, self.guard_x] = "G"
-        grid[self.escape_y, self.escape_x] = "E"
-        print(f"{grid} \n")
+        print("====================================")
+        print(f"Time: {self.timestep}")
+        print("Requests: ", self.requests)
+        print("Infra: ", self.infra.getLoadCPU())
+        print("====================================")
 
     # Observation space should be defined here.
     # lru_cache allows observation and action spaces to be memoized, reducing clock cycles required to get each agent's space.
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
-        return Discrete(2*N_PM + N_APPS + N_APPS*N_PM)
+        return Box(low=0,high=2**60,shape=(2*N_INFRA + N_APPS + N_APPS*N_INFRA,),dtype=int)
 
     # Action space should be defined here.
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
-        return Discrete(N_APPS)
+        return Box(low=0, high=1, shape=(N_INFRA,),dtype=float)

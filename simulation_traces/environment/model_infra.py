@@ -1,7 +1,10 @@
 import numpy as np
 
-from constants import TIME_PERIOD, N_APPS
-from model_apps import apps
+import os
+os.chdir(os.path.dirname(__file__))
+
+from environment.constants import TIME_PERIOD
+from environment.model_apps import apps
 
 class App:
     def __init__(self, id, consumption_CPU = 0, consumption_BW = 0, consumption_run = 0, consumption_start = 0, distribution = lambda x: 0) -> None:
@@ -37,13 +40,13 @@ class PM:
             return 0
         
         energy = self.consumption_idle
-        energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(T*self.CPU)) + 0.2*(self.BW_load/(T*self.BW)))
+        energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(TIME_PERIOD*self.CPU)) + 0.2*(self.BW_load/(TIME_PERIOD*self.BW)))
 
         for id, (app, old_app) in enumerate(zip(self.currentApps, self.lastApps)):
             if app != 0:
-                energy += self.apps[id].consumption_run
+                energy += self.apps[id]["consumption_run"]
                 if old_app != 0:
-                    energy += self.apps[id].consumption_start
+                    energy += self.apps[id]["consumption_start"]
 
         return energy
     
@@ -55,10 +58,10 @@ class PM:
         self.currentApps = [0]*len(self.apps)
 
     def addRequest(self, app: App):
-        self.currentApps[app.id] += 1
+        self.currentApps[app["id"]] += 1
 
-        self.CPU_load += app.consumption_CPU
-        self.BW_load += app.consumption_BW
+        self.CPU_load += app["consumption_CPU"]
+        self.BW_load += app["consumption_BW"]
         
 
 class SBC(PM):
@@ -83,6 +86,12 @@ class Infra():
     def getQoS(self):
         return 0
     
+    def getLoadCPU(self):
+        return tuple([pm.CPU_load for pm in self._infra])
+    
+    def getLoadBW(self):
+        return tuple([pm.BW_load for pm in self._infra])
+    
     def getQoS_penalty(self):
         QoS_penalty = 0
         for pm in self._infra:
@@ -96,18 +105,18 @@ class Infra():
 
     def addRequests(self, requests : np.ndarray[int], distribution : list[float]):
         if np.sum(requests) == 0: return 
-        request = np.random.choice(range(len(N_APPS)), p=requests/np.sum(requests))
+        request = np.random.choice(range(len(apps)), p=requests/np.sum(requests))
         requests[request] -= 1
         
         while np.sum(requests) > 0:
             pm_id = 0
             if np.sum(distribution[request]) == 0:
-                pm_id = np.random.choice(range(len(self._infra)))
+                pm_id = np.random.choice(range(self.getInfraSize()))
             else:
-                pm_id = np.random.choice(range(len(self._infra)), p=distribution[request])
-            self._infra[pm_id].addRequest(self.apps[request])
+                pm_id = np.random.choice(range(self.getInfraSize()), p=distribution[request]/np.sum(distribution[request]))
+            self._infra[pm_id].addRequest(apps[request])
 
-            request = np.random.choice(range(len(N_APPS)), p=requests/np.sum(requests))
+            request = np.random.choice(range(len(apps)), p=requests/np.sum(requests))
             requests[request] -= 1
 
             
