@@ -70,31 +70,37 @@ class CustomEnvironment(ParallelEnv):
 
         And any internal state used by observe() or render()
         """
+        self.timestep += 1
+
         # Execute actions
         distribution = np.array([actions[a] for a in self.agents])
 
         self.requests = getRequests(self.timestep)
 
+        self.infra.resetLoad()
         self.infra.addRequests(self.requests, distribution)
 
         reward = (
             -self.infra.getPowerUsage() 
             - LAMBDA*self.infra.getQoS()
-            - np.exp(LAMBDA_2*self.infra.getQoS_penalty()))     
+            - np.exp(LAMBDA_2*self.infra.getQoS_penalty())) 
+
+        rewards = {a: reward for a in self.agents}   
+        
+        # Check termination conditions
+        terminations = {a: False for a in self.agents}
         
         # Check truncation conditions (overwrites termination conditions) TODO
         truncations = {a: False for a in self.agents}
-        if self.timestep > 100:
-            rewards = {"prisoner": 0, "guard": 0}
-            truncations = {"prisoner": True, "guard": True}
-        self.timestep += 1
 
         # Get observations TODO
+        state = ()
+        state = state + self.infra.getLoadCPU()
+        state = state + self.infra.getLoadBW()
+
         observations = {
             a: (
-                self.prisoner_x + 7 * self.prisoner_y,
-                self.guard_x + 7 * self.guard_y,
-                self.escape_x + 7 * self.escape_y,
+                state + self.requests[a]
             )
             for a in self.agents
         }

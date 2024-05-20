@@ -1,8 +1,9 @@
 from model_apps import apps
-from model_infra import infra
+from model_infra import Infra
+
 
 TIME_PERIOD = 1
-N_PM = len(infra)
+N_PM = Infra().getInfraSize()
 N_APPS = len(apps)
 
 LAMBDA = 0

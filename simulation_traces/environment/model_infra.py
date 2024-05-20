@@ -72,23 +72,26 @@ class Cloud(PM):
 
 class Infra():
     def __init__(self) -> None:
-        self.infra = [Cloud(0,apps)] + [SBC(i,apps) for i in range(1,5)]
+        self._infra = [Cloud(0,apps)] + [SBC(i,apps) for i in range(1,5)]
 
+    def getInfraSize(self) -> int:
+        return len(self._infra)
+    
     def getPowerUsage(self):
-        return sum([pm.powerUsage() for pm in self.infra])
+        return sum([pm.powerUsage() for pm in self._infra])
     
     def getQoS(self):
         return 0
     
     def getQoS_penalty(self):
         QoS_penalty = 0
-        for pm in self.infra:
+        for pm in self._infra:
             if pm.CPU_load > pm.CPU*TIME_PERIOD:
                 QoS_penalty += pm.CPU_load - pm.CPU*TIME_PERIOD
         return QoS_penalty
     
     def resetLoad(self):
-        for pm in self.infra:
+        for pm in self._infra:
             pm.resetLoad()
 
     def addRequests(self, requests : np.ndarray[int], distribution : list[float]):
@@ -99,10 +102,10 @@ class Infra():
         while np.sum(requests) > 0:
             pm_id = 0
             if np.sum(distribution[request]) == 0:
-                pm_id = np.random.choice(range(len(self.infra)))
+                pm_id = np.random.choice(range(len(self._infra)))
             else:
-                pm_id = np.random.choice(range(len(self.infra)), p=distribution[request])
-            self.infra[pm_id].addRequest(self.apps[request])
+                pm_id = np.random.choice(range(len(self._infra)), p=distribution[request])
+            self._infra[pm_id].addRequest(self.apps[request])
 
             request = np.random.choice(range(len(N_APPS)), p=requests/np.sum(requests))
             requests[request] -= 1
