@@ -1,4 +1,6 @@
-from constants import T
+import numpy as np
+
+from constants import TIME_PERIOD, N_APPS
 from model_apps import apps
 
 class App:
@@ -68,5 +70,41 @@ class Cloud(PM):
         super().__init__(id, apps, 1000000, 1000000, 100, 1000)
 
 
+class Infra():
+    def __init__(self) -> None:
+        self.infra = [Cloud(0,apps)] + [SBC(i,apps) for i in range(1,5)]
 
-infra = [Cloud(0,apps)] + [SBC(i,apps) for i in range(1,5)]
+    def getPowerUsage(self):
+        return sum([pm.powerUsage() for pm in self.infra])
+    
+    def getQoS(self):
+        return 0
+    
+    def getQoS_penalty(self):
+        QoS_penalty = 0
+        for pm in self.infra:
+            if pm.CPU_load > pm.CPU*TIME_PERIOD:
+                QoS_penalty += pm.CPU_load - pm.CPU*TIME_PERIOD
+        return QoS_penalty
+    
+    def resetLoad(self):
+        for pm in self.infra:
+            pm.resetLoad()
+
+    def addRequests(self, requests : np.ndarray[int], distribution : list[float]):
+        if np.sum(requests) == 0: return 
+        request = np.random.choice(range(len(N_APPS)), p=requests/np.sum(requests))
+        requests[request] -= 1
+        
+        while np.sum(requests) > 0:
+            pm_id = 0
+            if np.sum(distribution[request]) == 0:
+                pm_id = np.random.choice(range(len(self.infra)))
+            else:
+                pm_id = np.random.choice(range(len(self.infra)), p=distribution[request])
+            self.infra[pm_id].addRequest(self.apps[request])
+
+            request = np.random.choice(range(len(N_APPS)), p=requests/np.sum(requests))
+            requests[request] -= 1
+
+            

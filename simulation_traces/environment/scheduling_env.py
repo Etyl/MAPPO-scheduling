@@ -9,7 +9,7 @@ from pettingzoo import ParallelEnv
 
 from constants import *
 from model_apps import getRequests
-from model_infra import infra
+from model_infra import Infra
 
 
 class CustomEnvironment(ParallelEnv):
@@ -26,6 +26,9 @@ class CustomEnvironment(ParallelEnv):
         self.requests : list[int] = []
         self.nextRequests : list[int] = []
         self.requestsHistory : list[np.ndarray[int]] = []
+        self.agents = list(range(N_APPS))
+        self.infra = Infra()
+        self.timestep = 0
 
     def reset(self, seed=None, options=None):
         """Reset set the environment to a starting point.
@@ -41,25 +44,11 @@ class CustomEnvironment(ParallelEnv):
 
         And must set up the environment so that render(), step(), and observe() can be called without issues.
         """
-        self.agents = copy(self.possible_agents)
-        self.timestep = 0
-
-        self.prisoner_x = 0
-        self.prisoner_y = 0
-
-        self.guard_x = 6
-        self.guard_y = 6
-
-        self.escape_x = random.randint(2, 5)
-        self.escape_y = random.randint(2, 5)
+        self.timestep = random.randint(0, 100)
+        self.infra.resetLoad()
 
         observations = {
-            a: (
-                self.prisoner_x + 7 * self.prisoner_y,
-                self.guard_x + 7 * self.guard_y,
-                self.escape_x + 7 * self.escape_y,
-            )
-            for a in self.agents
+            a: () for a in self.agents
         }
 
         # Get dummy infos. Necessary for proper parallel_to_aec conversion
@@ -82,46 +71,25 @@ class CustomEnvironment(ParallelEnv):
         And any internal state used by observe() or render()
         """
         # Execute actions
-        prisoner_action = actions["prisoner"]
-        guard_action = actions["guard"]
+        distribution = np.array([actions[a] for a in self.agents])
 
-        if prisoner_action == 0 and self.prisoner_x > 0:
-            self.prisoner_x -= 1
-        elif prisoner_action == 1 and self.prisoner_x < 6:
-            self.prisoner_x += 1
-        elif prisoner_action == 2 and self.prisoner_y > 0:
-            self.prisoner_y -= 1
-        elif prisoner_action == 3 and self.prisoner_y < 6:
-            self.prisoner_y += 1
+        self.requests = getRequests(self.timestep)
 
-        if guard_action == 0 and self.guard_x > 0:
-            self.guard_x -= 1
-        elif guard_action == 1 and self.guard_x < 6:
-            self.guard_x += 1
-        elif guard_action == 2 and self.guard_y > 0:
-            self.guard_y -= 1
-        elif guard_action == 3 and self.guard_y < 6:
-            self.guard_y += 1
+        self.infra.addRequests(self.requests, distribution)
 
-        # Check termination conditions
-        terminations = {a: False for a in self.agents}
-        rewards = {a: 0 for a in self.agents}
-        if self.prisoner_x == self.guard_x and self.prisoner_y == self.guard_y:
-            rewards = {"prisoner": -1, "guard": 1}
-            terminations = {a: True for a in self.agents}
-
-        elif self.prisoner_x == self.escape_x and self.prisoner_y == self.escape_y:
-            rewards = {"prisoner": 1, "guard": -1}
-            terminations = {a: True for a in self.agents}
-
-        # Check truncation conditions (overwrites termination conditions)
+        reward = (
+            -self.infra.getPowerUsage() 
+            - LAMBDA*self.infra.getQoS()
+            - np.exp(LAMBDA_2*self.infra.getQoS_penalty()))     
+        
+        # Check truncation conditions (overwrites termination conditions) TODO
         truncations = {a: False for a in self.agents}
         if self.timestep > 100:
             rewards = {"prisoner": 0, "guard": 0}
             truncations = {"prisoner": True, "guard": True}
         self.timestep += 1
 
-        # Get observations
+        # Get observations TODO
         observations = {
             a: (
                 self.prisoner_x + 7 * self.prisoner_y,
@@ -149,14 +117,12 @@ class CustomEnvironment(ParallelEnv):
 
     # Observation space should be defined here.
     # lru_cache allows observation and action spaces to be memoized, reducing clock cycles required to get each agent's space.
-    # If your spaces change over time, remove this line (disable caching).
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
         return Discrete(2*N_PM + N_APPS + N_APPS*N_PM)
 
     # Action space should be defined here.
-    # If your spaces change over time, remove this line (disable caching).
     @functools.lru_cache(maxsize=None)
     def action_space(self, agent):
         return Discrete(N_APPS)
