@@ -33,7 +33,7 @@ class SchedulingEnv(ParallelEnv):
         self.nextRequests : list[int] = []
         self.requestsHistory : list[np.ndarray[int]] = []
         self.infra = Infra()
-        self.agents = list(range(N_APPS))
+        self.possible_agents = list(range(N_APPS))
         self.timestep = 0
 
     def reset(self, seed=None, options=None):
@@ -50,11 +50,12 @@ class SchedulingEnv(ParallelEnv):
 
         And must set up the environment so that render(), step(), and observe() can be called without issues.
         """
+        self.agents = copy(self.possible_agents)
         self.timestep = random.randint(0, 100)
         self.infra.resetLoad()
 
         observations = {
-            a: () for a in self.agents
+            a: () for a in self.agents 
         }
 
         # Get dummy infos. Necessary for proper parallel_to_aec conversion
