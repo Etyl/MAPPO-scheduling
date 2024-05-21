@@ -87,10 +87,10 @@ class Infra():
         return 0
     
     def getLoadCPU(self):
-        return tuple([pm.CPU_load for pm in self._infra])
+        return [pm.CPU_load for pm in self._infra]
     
     def getLoadBW(self):
-        return tuple([pm.BW_load for pm in self._infra])
+        return [pm.BW_load for pm in self._infra]
     
     def getQoS_penalty(self):
         QoS_penalty = 0

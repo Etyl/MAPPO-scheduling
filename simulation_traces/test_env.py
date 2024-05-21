@@ -2,32 +2,22 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from supersuit import color_reduction_v0, frame_stack_v1, resize_v1
 from torch.distributions.categorical import Categorical
 
 from environment.scheduling_env import SchedulingEnv
-
 
 class Agent(nn.Module):
     def __init__(self, num_actions):
         super().__init__()
 
         self.network = nn.Sequential(
-            self._layer_init(nn.Conv2d(4, 32, 3, padding=1)),
-            nn.MaxPool2d(2),
+            self._layer_init(nn.Linear(11, 128)), # TODO input size
             nn.ReLU(),
-            self._layer_init(nn.Conv2d(32, 64, 3, padding=1)),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            self._layer_init(nn.Conv2d(64, 128, 3, padding=1)),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            nn.Flatten(),
-            self._layer_init(nn.Linear(128 * 8 * 8, 512)),
+            self._layer_init(nn.Linear(128, 128)),
             nn.ReLU(),
         )
-        self.actor = self._layer_init(nn.Linear(512, num_actions), std=0.01)
-        self.critic = self._layer_init(nn.Linear(512, 1))
+        self.actor = self._layer_init(nn.Linear(128, num_actions), std=0.01)
+        self.critic = self._layer_init(nn.Linear(128, 1))
 
     def _layer_init(self, layer, std=np.sqrt(2), bias_const=0.0):
         torch.nn.init.orthogonal_(layer.weight, std)
@@ -35,23 +25,21 @@ class Agent(nn.Module):
         return layer
 
     def get_value(self, x):
-        return self.critic(self.network(x / 255.0))
+        return self.critic(self.network(x))
 
     def get_action_and_value(self, x, action=None):
-        hidden = self.network(x / 255.0)
+        hidden = self.network(x.float())
         logits = self.actor(hidden)
         probs = Categorical(logits=logits)
         if action is None:
-            action = probs.sample()
-        return action, probs.log_prob(action), probs.entropy(), self.critic(hidden)
+            action = nn.Softmax(dim=1)(logits)
+        return action, probs.log_prob(probs.sample()), probs.entropy(), self.critic(hidden)
 
 
 def batchify_obs(obs, device):
     """Converts PZ style observations to batch of torch arrays."""
     # convert to list of np arrays
     obs = np.stack([obs[a] for a in obs], axis=0)
-    # transpose to be (batch, channel, height, width)
-    obs = obs.transpose(0, -1, 1, 2)
     # convert to torch
     obs = torch.tensor(obs).to(device)
 
@@ -87,7 +75,7 @@ if __name__ == "__main__":
     stack_size = 4
     frame_size = (64, 64)
     max_cycles = 125
-    total_episodes = 2
+    total_episodes = 10
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -102,8 +90,8 @@ if __name__ == "__main__":
     """ ALGO LOGIC: EPISODE STORAGE"""
     end_step = 0
     total_episodic_return = 0
-    rb_obs = torch.zeros((max_cycles, num_agents, stack_size)).to(device)
-    rb_actions = torch.zeros((max_cycles, num_agents)).to(device)
+    rb_obs = torch.zeros((max_cycles, num_agents, 11)).to(device)
+    rb_actions = torch.zeros((max_cycles, num_agents, num_actions)).to(device)
     rb_logprobs = torch.zeros((max_cycles, num_agents)).to(device)
     rb_rewards = torch.zeros((max_cycles, num_agents)).to(device)
     rb_terms = torch.zeros((max_cycles, num_agents)).to(device)
@@ -231,15 +219,15 @@ if __name__ == "__main__":
 
         print(f"Training episode {episode}")
         print(f"Episodic Return: {np.mean(total_episodic_return)}")
-        print(f"Episode Length: {end_step}")
-        print("")
-        print(f"Value Loss: {v_loss.item()}")
-        print(f"Policy Loss: {pg_loss.item()}")
-        print(f"Old Approx KL: {old_approx_kl.item()}")
-        print(f"Approx KL: {approx_kl.item()}")
-        print(f"Clip Fraction: {np.mean(clip_fracs)}")
-        print(f"Explained Variance: {explained_var.item()}")
-        print("\n-------------------------------------------\n")
+        # print(f"Episode Length: {end_step}")
+        # print("")
+        # print(f"Value Loss: {v_loss.item()}")
+        # print(f"Policy Loss: {pg_loss.item()}")
+        # print(f"Old Approx KL: {old_approx_kl.item()}")
+        # print(f"Approx KL: {approx_kl.item()}")
+        # print(f"Clip Fraction: {np.mean(clip_fracs)}")
+        # print(f"Explained Variance: {explained_var.item()}")
+        # print("\n-------------------------------------------\n")
 
     """ RENDER THE POLICY """
     env = SchedulingEnv()
@@ -248,16 +236,16 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         # render 5 episodes out
-        for episode in range(5):
+        for episode in range(1):
             obs, infos = env.reset(seed=None)
             obs = batchify_obs(obs, device)
             terms = [False]
             truncs = [False]
-            step = 0
             while not any(terms) and not any(truncs) and step < 1000:
                 actions, logprobs, _, values = agent.get_action_and_value(obs)
                 obs, rewards, terms, truncs, infos = env.step(unbatchify(actions, env))
                 obs = batchify_obs(obs, device)
                 terms = [terms[a] for a in terms]
                 truncs = [truncs[a] for a in truncs]
+
                 step += 1

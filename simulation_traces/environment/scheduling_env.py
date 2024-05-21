@@ -46,13 +46,13 @@ class SchedulingEnv(ParallelEnv):
         self.requests = getRequests(self.timestep)
 
         # Reset observations 
-        state = ()
+        state = []
         state = state + self.infra.getLoadCPU()
         state = state + self.infra.getLoadBW()
 
         observations = {
             a: (
-                state + self.requests[a]
+                tuple(state + [self.requests[int(a)]])
             )
             for a in self.agents
         }
@@ -89,14 +89,14 @@ class SchedulingEnv(ParallelEnv):
         # Check truncation conditions (overwrites termination conditions) TODO
         truncations = {a: False for a in self.agents}
 
-        # Get observations TODO
-        state = ()
+        # Reset observations 
+        state = []
         state = state + self.infra.getLoadCPU()
         state = state + self.infra.getLoadBW()
 
         observations = {
             a: (
-                state + self.requests[a]
+                tuple(state + [self.requests[int(a)]])
             )
             for a in self.agents
         }
@@ -122,7 +122,7 @@ class SchedulingEnv(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
-        return Box(low=0,high=2**60,shape=(2*N_INFRA + N_APPS + N_APPS*N_INFRA,),dtype=int)
+        return Box(low=0,high=2**60,shape=(2*N_INFRA + 1,),dtype=int)
 
     # Action space should be defined here.
     @functools.lru_cache(maxsize=None)
