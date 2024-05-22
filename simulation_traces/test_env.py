@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.categorical import Categorical
+from torch.distributions import MultivariateNormal
+
 
 from environment.scheduling_env import SchedulingEnv
 
@@ -19,6 +21,12 @@ class Agent(nn.Module):
         self.actor = self._layer_init(nn.Linear(128, num_actions), std=0.01)
         self.critic = self._layer_init(nn.Linear(128, 1))
 
+        self.cov_var = torch.full(size=(num_actions,), fill_value=0.1)
+  
+        # Create the covariance matrix
+        self.cov_mat = torch.diag(self.cov_var)
+        print("#")
+
     def _layer_init(self, layer, std=np.sqrt(2), bias_const=0.0):
         torch.nn.init.orthogonal_(layer.weight, std)
         torch.nn.init.constant_(layer.bias, bias_const)
@@ -30,10 +38,14 @@ class Agent(nn.Module):
     def get_action_and_value(self, x, action=None):
         hidden = self.network(x.float())
         logits = self.actor(hidden)
-        probs = Categorical(logits=logits)
+        mean = nn.Softmax(dim=-1)(logits)    
+        dist = MultivariateNormal(mean, self.cov_mat)
         if action is None:
-            action = nn.Softmax(dim=1)(logits)
-        return action, probs.log_prob(probs.sample()), probs.entropy(), self.critic(hidden)
+            action = dist.sample()
+            action = torch.clamp(action, 0, 1)
+            action = torch.nn.functional.normalize(action, p=1, dim=-1)
+
+        return action, dist.log_prob(action), dist.entropy(), self.critic(hidden)
 
 
 def batchify_obs(obs, device):
@@ -88,7 +100,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(agent.parameters(), lr=0.001, eps=1e-5)
 
     """ ALGO LOGIC: EPISODE STORAGE"""
-    end_step = 0
+    end_step = max_cycles
     total_episodic_return = 0
     rb_obs = torch.zeros((max_cycles, num_agents, 11)).to(device)
     rb_actions = torch.zeros((max_cycles, num_agents, num_actions)).to(device)
@@ -139,7 +151,7 @@ if __name__ == "__main__":
         # bootstrap value if not done
         with torch.no_grad():
             rb_advantages = torch.zeros_like(rb_rewards).to(device)
-            for t in reversed(range(end_step)):
+            for t in reversed(range(end_step-1)):
                 delta = (
                     rb_rewards[t]
                     + gamma * rb_values[t + 1] * rb_terms[t + 1]
@@ -171,7 +183,7 @@ if __name__ == "__main__":
                     b_obs[batch_index], b_actions.long()[batch_index]
                 )
                 logratio = newlogprob - b_logprobs[batch_index]
-                ratio = logratio.exp()
+                ratio = logratio.exp() # TODO get ratio from logprob
 
                 with torch.no_grad():
                     # calculate approx_kl http://joschu.net/blog/kl-approx.html
@@ -219,15 +231,15 @@ if __name__ == "__main__":
 
         print(f"Training episode {episode}")
         print(f"Episodic Return: {np.mean(total_episodic_return)}")
-        # print(f"Episode Length: {end_step}")
-        # print("")
-        # print(f"Value Loss: {v_loss.item()}")
-        # print(f"Policy Loss: {pg_loss.item()}")
-        # print(f"Old Approx KL: {old_approx_kl.item()}")
-        # print(f"Approx KL: {approx_kl.item()}")
-        # print(f"Clip Fraction: {np.mean(clip_fracs)}")
-        # print(f"Explained Variance: {explained_var.item()}")
-        # print("\n-------------------------------------------\n")
+        print(f"Episode Length: {end_step}")
+        print("")
+        print(f"Value Loss: {v_loss.item()}")
+        print(f"Policy Loss: {pg_loss.item()}")
+        print(f"Old Approx KL: {old_approx_kl.item()}")
+        print(f"Approx KL: {approx_kl.item()}")
+        print(f"Clip Fraction: {np.mean(clip_fracs)}")
+        print(f"Explained Variance: {explained_var.item()}")
+        print("\n-------------------------------------------\n")
 
     """ RENDER THE POLICY """
     env = SchedulingEnv()
