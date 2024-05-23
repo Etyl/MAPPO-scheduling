@@ -5,7 +5,6 @@ import torch.optim as optim
 from torch.distributions.categorical import Categorical
 from torch.distributions import MultivariateNormal
 
-
 from environment.scheduling_env import SchedulingEnv
 
 class Agent(nn.Module):
@@ -77,6 +76,11 @@ def unbatchify(x, env):
 
 
 if __name__ == "__main__":
+
+    save_file = "train_values.csv"
+    with open(save_file, "w") as f:
+        f.write("episode-return, value-loss, policy-loss, old-approx-kl, approx-kl, clip-fraction, explained-variance\n")
+
     """ALGO PARAMS"""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ent_coef = 0.1
@@ -84,10 +88,8 @@ if __name__ == "__main__":
     clip_coef = 0.1
     gamma = 0.99
     batch_size = 32
-    stack_size = 4
-    frame_size = (64, 64)
-    max_cycles = 125
-    total_episodes = 10
+    max_cycles = 200
+    total_episodes = 80
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -240,6 +242,11 @@ if __name__ == "__main__":
         print(f"Clip Fraction: {np.mean(clip_fracs)}")
         print(f"Explained Variance: {explained_var.item()}")
         print("\n-------------------------------------------\n")
+
+        with open(save_file, "a") as f:
+            f.write(
+                f"{np.mean(total_episodic_return)}, {v_loss.item()}, {pg_loss.item()}, {old_approx_kl.item()}, {approx_kl.item()}, {np.mean(clip_fracs)}, {explained_var.item()}\n"
+            )
 
     """ RENDER THE POLICY """
     env = SchedulingEnv()
