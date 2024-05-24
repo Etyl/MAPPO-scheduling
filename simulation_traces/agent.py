@@ -5,6 +5,7 @@ import torch.optim as optim
 from torch.distributions.categorical import Categorical
 from torch.distributions import MultivariateNormal
 import os
+import tqdm
 
 from environment.scheduling_env import SchedulingEnv
 from environment.constants import *
@@ -25,7 +26,7 @@ class Agent(nn.Module):
         self.cov_var = torch.full(size=(num_actions,), fill_value=1.)
   
         # Create the covariance matrix
-        self.cov_mat = torch.diag(self.cov_var)
+        self.cov_mat = torch.diag(self.cov_var).to(device)
         print("#")
 
     def _layer_init(self, layer, std=np.sqrt(2), bias_const=0.0):
@@ -39,7 +40,7 @@ class Agent(nn.Module):
     def get_action_and_value(self, x, action=None):
         hidden = self.network(x.float())
         logits = self.actor(hidden)
-        mean = nn.Softmax(dim=-1)(logits)    
+        mean = nn.Softmax(dim=-1)(logits) 
         dist = MultivariateNormal(mean, self.cov_mat)
         if action is None:
             action = dist.sample()
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     gamma = 0.99
     batch_size = 32
     max_cycles = 200
-    total_episodes = 60
+    total_episodes = 10
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -118,7 +119,7 @@ if __name__ == "__main__":
 
     """ TRAINING LOGIC """
     # train for n number of episodes
-    for episode in range(total_episodes):
+    for episode in tqdm.tqdm(range(total_episodes)):
         # collect an episode
         with torch.no_grad():
             # collect observations and convert to batch of torch tensors
@@ -236,18 +237,6 @@ if __name__ == "__main__":
         var_y = np.var(y_true)
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
 
-        print(f"Training episode {episode}")
-        print(f"Episodic Return: {np.mean(total_episodic_return)}")
-        print(f"Episode Length: {end_step}")
-        print("")
-        print(f"Value Loss: {v_loss.item()}")
-        print(f"Policy Loss: {pg_loss.item()}")
-        print(f"Old Approx KL: {old_approx_kl.item()}")
-        print(f"Approx KL: {approx_kl.item()}")
-        print(f"Clip Fraction: {np.mean(clip_fracs)}")
-        print(f"Explained Variance: {explained_var.item()}")
-        print("\n-------------------------------------------\n")
-
         with open(save_file_learning, "a") as f:
             f.write(
                 f"{np.mean(total_episodic_return)}, {v_loss.item()}, {pg_loss.item()}, {old_approx_kl.item()}, {approx_kl.item()}, {np.mean(clip_fracs)}, {explained_var.item()}\n"
@@ -278,13 +267,13 @@ if __name__ == "__main__":
                 truncs = [truncs[a] for a in truncs]
 
                 step += 1
-                total_obs.append(obs.numpy())
-                total_actions.append(actions.numpy())
-                total_rewards.append(rewards)
+                total_obs.append(obs.cpu().numpy())
+                total_actions.append(actions.cpu().numpy())
+                total_rewards.append(rewards["0"])
 
     with open(save_file_results, "w") as f:
         for (obs, actions) in zip(total_obs, total_actions):
             line =  ",".join(str(x) for x in obs.flatten()) + "," 
             line += ",".join(str(x) for x in actions.flatten()) + "," 
-            line += str(rewards["0"]) + "\n"
+            line += str(rewards) + "\n"
             f.write(line)
