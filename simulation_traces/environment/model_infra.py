@@ -73,7 +73,7 @@ class Cloud(PM):
 
 class Infra():
     def __init__(self) -> None:
-        self._infra = [Cloud(0,apps)] + [SBC(i,apps) for i in range(1,5)]
+        self._infra = [SBC(i,apps) for i in range(2)]
 
     def getInfraSize(self) -> int:
         return len(self._infra)

@@ -94,7 +94,7 @@ if __name__ == "__main__":
     gamma = 0.99
     batch_size = 32
     max_cycles = 200
-    total_episodes = 0
+    total_episodes = 60
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     """ ALGO LOGIC: EPISODE STORAGE"""
     end_step = max_cycles
     total_episodic_return = 0
-    rb_obs = torch.zeros((max_cycles, num_agents, 11)).to(device)
+    rb_obs = torch.zeros((max_cycles, num_agents, OBSERVATION_SPACE_SIZE)).to(device)
     rb_actions = torch.zeros((max_cycles, num_agents, num_actions)).to(device)
     rb_logprobs = torch.zeros((max_cycles, num_agents)).to(device)
     rb_rewards = torch.zeros((max_cycles, num_agents)).to(device)
@@ -270,7 +270,7 @@ if __name__ == "__main__":
             terms = [False]
             truncs = [False]
             step = 0
-            while not any(terms) and not any(truncs) and step < 1000:
+            while not any(terms) and not any(truncs) and step < 200:
                 actions, logprobs, _, values = agent.get_action_and_value(obs)
                 obs, rewards, terms, truncs, infos = env.step(unbatchify(actions, env))
                 obs = batchify_obs(obs, device)
