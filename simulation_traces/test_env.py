@@ -20,7 +20,7 @@ class Agent(nn.Module):
         self.actor = self._layer_init(nn.Linear(128, num_actions), std=0.01)
         self.critic = self._layer_init(nn.Linear(128, 1))
 
-        self.cov_var = torch.full(size=(num_actions,), fill_value=0.1)
+        self.cov_var = torch.full(size=(num_actions,), fill_value=1.)
   
         # Create the covariance matrix
         self.cov_mat = torch.diag(self.cov_var)
