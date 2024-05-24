@@ -15,13 +15,13 @@ class Agent(nn.Module):
         super().__init__()
 
         self.network = nn.Sequential(
-            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 128)), 
+            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 32)), 
             nn.ReLU(),
-            self._layer_init(nn.Linear(128, 128)),
+            self._layer_init(nn.Linear(32, 32)),
             nn.ReLU(),
         )
-        self.actor = self._layer_init(nn.Linear(128, num_actions), std=0.01)
-        self.critic = self._layer_init(nn.Linear(128, 1))
+        self.actor = self._layer_init(nn.Linear(32, num_actions), std=0.01)
+        self.critic = self._layer_init(nn.Linear(32, 1))
 
         self.cov_var = torch.full(size=(num_actions,), fill_value=1.)
   
@@ -88,14 +88,14 @@ if __name__ == "__main__":
         f.write("episode-return, value-loss, policy-loss, old-approx-kl, approx-kl, clip-fraction, explained-variance\n")
 
     """ALGO PARAMS"""
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu" # torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ent_coef = 0.1
     vf_coef = 0.1
     clip_coef = 0.1
     gamma = 0.99
     batch_size = 32
     max_cycles = 200
-    total_episodes = 10
+    total_episodes = 5
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -272,8 +272,8 @@ if __name__ == "__main__":
                 total_rewards.append(rewards["0"])
 
     with open(save_file_results, "w") as f:
-        for (obs, actions) in zip(total_obs, total_actions):
+        for (obs, actions, reward) in zip(total_obs, total_actions,total_rewards):
             line =  ",".join(str(x) for x in obs.flatten()) + "," 
             line += ",".join(str(x) for x in actions.flatten()) + "," 
-            line += str(rewards) + "\n"
+            line += str(reward) + "\n"
             f.write(line)

@@ -60,6 +60,12 @@ class PM:
 
         self.CPU_load += app["consumption_CPU"]
         self.BW_load += app["consumption_BW"]
+    
+    def addRequests(self, app: App, requests: int):
+        self.currentApps[app["id"]] += requests
+
+        self.CPU_load += app["consumption_CPU"]*requests
+        self.BW_load += app["consumption_BW"]*requests
         
 
 class SBC(PM):
@@ -101,22 +107,40 @@ class Infra():
         for pm in self._infra:
             pm.resetLoad()
 
-    def addRequests(self, requests : np.ndarray[int], distribution : list[float]):
-        if np.sum(requests) == 0: return 
+    def addRequests(self, requests : np.ndarray[int], distribution : list[list[float]], fast = True):
+        """
+        Adds requests to the infrastructure
+        Params:
+            requests : np.ndarray[int] : number of requests for each app
+            distribution : list[list[float]] : distribution of requests for each app over the infrastructure
+            fast : bool : if False, the requests are added one by one, otherwise all at once"""
         
-        requests_c = requests.copy()
-        request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
-        requests_c[request] -= 1
-        
-        while np.sum(requests_c) > 0:
-            pm_id = 0
-            if np.sum(distribution[request]) == 0:
-                pm_id = np.random.choice(range(self.getInfraSize()))
-            else:
-                pm_id = np.random.choice(range(self.getInfraSize()), p=distribution[request]/np.sum(distribution[request]))
-            self._infra[pm_id].addRequest(apps[request])
-
+        if not fast:
+            if np.sum(requests) == 0: return 
+            
+            requests_c = requests.copy()
             request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
             requests_c[request] -= 1
+            
+            while np.sum(requests_c) > 0:
+                pm_id = 0
+                if np.sum(distribution[request]) == 0:
+                    pm_id = np.random.choice(range(self.getInfraSize()))
+                else:
+                    pm_id = np.random.choice(range(self.getInfraSize()), p=distribution[request]/np.sum(distribution[request]))
+                self._infra[pm_id].addRequest(apps[request])
+
+                request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
+                requests_c[request] -= 1
+        
+        else:
+            distribution_int = np.array(distribution)
+            for i,requests in enumerate(requests):
+                distribution_int[i] *= requests
+            distribution_int = np.rint(distribution_int).astype(int)
+            
+            for app in range(len(distribution_int)):
+                for pm in range(len(distribution_int[app])):
+                    self._infra[pm].addRequests(apps[app], distribution_int[app][pm])
 
             
