@@ -31,6 +31,7 @@ class SchedulingEnv(ParallelEnv):
         self.infra = Infra()
         self.possible_agents = list(map(str,range(N_APPS)))
         self.timestep = 0
+        self.last_actions = None
 
     def reset(self, seed=None, options=None):
         """Reset set the environment to a starting point.
@@ -48,7 +49,7 @@ class SchedulingEnv(ParallelEnv):
 
         observations = {
             a: (
-                tuple(state + [self.requests[int(a)]])
+                tuple(state + [0]*N_INFRA + [self.requests[int(a)]])
             )
             for a in self.agents
         }
@@ -90,18 +91,28 @@ class SchedulingEnv(ParallelEnv):
         state = state + self.infra.getLoadCPU()
         state = state + self.infra.getLoadBW()
 
-        observations = {
-            a: (
-                tuple(state + [self.requests[int(a)]])
-            )
-            for a in self.agents
-        }
+        if self.last_actions is not None:
+            observations = {
+                a: (
+                    tuple(state + list(actions[a]) + [self.requests[int(a)]])
+                )
+                for a in self.agents
+            }
+        else:
+            observations = {
+                a: (
+                    tuple(state + [0]*N_INFRA + [self.requests[int(a)]])
+                )
+                for a in self.agents
+            }
 
         # Get dummy infos (not used in this example)
         infos = {a: {} for a in self.agents}
 
         if any(terminations.values()) or all(truncations.values()):
             self.agents = []
+
+        self.last_actions = actions
 
         return observations, rewards, terminations, truncations, infos
 

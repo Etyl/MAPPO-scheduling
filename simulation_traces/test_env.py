@@ -7,13 +7,14 @@ from torch.distributions import MultivariateNormal
 import os
 
 from environment.scheduling_env import SchedulingEnv
+from environment.constants import *
 
 class Agent(nn.Module):
     def __init__(self, num_actions):
         super().__init__()
 
         self.network = nn.Sequential(
-            self._layer_init(nn.Linear(11, 128)), # TODO input size
+            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 128)), 
             nn.ReLU(),
             self._layer_init(nn.Linear(128, 128)),
             nn.ReLU(),
