@@ -259,6 +259,7 @@ if __name__ == "__main__":
 
     total_obs = []
     total_actions = []
+    total_rewards = []
 
     with torch.no_grad():
         # render 5 episodes out
@@ -278,8 +279,11 @@ if __name__ == "__main__":
                 step += 1
                 total_obs.append(obs.numpy())
                 total_actions.append(actions.numpy())
+                total_rewards.append(rewards)
 
     with open(save_file_results, "w") as f:
         for (obs, actions) in zip(total_obs, total_actions):
-            line = ",".join(map(str,obs.flat)) + "," + ",".join(map(str,actions)) + "\n"
+            line =  ",".join(str(x) for x in obs.flatten()) + "," 
+            line += ",".join(str(x) for x in actions.flatten()) + "," 
+            line += str(rewards["0"]) + "\n"
             f.write(line)
