@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.distributions.categorical import Categorical
 from torch.distributions import MultivariateNormal
+import os
 
 from environment.scheduling_env import SchedulingEnv
 
@@ -77,8 +78,11 @@ def unbatchify(x, env):
 
 if __name__ == "__main__":
 
-    save_file = "train_values.csv"
-    with open(save_file, "w") as f:
+    os.chdir(os.path.dirname(__file__))
+
+    save_file_learning = "./data/learning.csv"
+    save_file_results = "./data/results.csv"
+    with open(save_file_learning, "w") as f:
         f.write("episode-return, value-loss, policy-loss, old-approx-kl, approx-kl, clip-fraction, explained-variance\n")
 
     """ALGO PARAMS"""
@@ -89,7 +93,7 @@ if __name__ == "__main__":
     gamma = 0.99
     batch_size = 32
     max_cycles = 200
-    total_episodes = 80
+    total_episodes = 0
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -243,7 +247,7 @@ if __name__ == "__main__":
         print(f"Explained Variance: {explained_var.item()}")
         print("\n-------------------------------------------\n")
 
-        with open(save_file, "a") as f:
+        with open(save_file_learning, "a") as f:
             f.write(
                 f"{np.mean(total_episodic_return)}, {v_loss.item()}, {pg_loss.item()}, {old_approx_kl.item()}, {approx_kl.item()}, {np.mean(clip_fracs)}, {explained_var.item()}\n"
             )
@@ -253,6 +257,9 @@ if __name__ == "__main__":
 
     agent.eval()
 
+    total_obs = []
+    total_actions = []
+
     with torch.no_grad():
         # render 5 episodes out
         for episode in range(1):
@@ -260,6 +267,7 @@ if __name__ == "__main__":
             obs = batchify_obs(obs, device)
             terms = [False]
             truncs = [False]
+            step = 0
             while not any(terms) and not any(truncs) and step < 1000:
                 actions, logprobs, _, values = agent.get_action_and_value(obs)
                 obs, rewards, terms, truncs, infos = env.step(unbatchify(actions, env))
@@ -268,3 +276,10 @@ if __name__ == "__main__":
                 truncs = [truncs[a] for a in truncs]
 
                 step += 1
+                total_obs.append(obs.numpy())
+                total_actions.append(actions.numpy())
+
+    with open(save_file_results, "w") as f:
+        for (obs, actions) in zip(total_obs, total_actions):
+            line = ",".join(map(str,obs.flat)) + "," + ",".join(map(str,actions)) + "\n"
+            f.write(line)

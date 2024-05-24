@@ -1,10 +1,8 @@
 import numpy as np
 
-import os
-os.chdir(os.path.dirname(__file__))
-
 from environment.constants import TIME_PERIOD
 from environment.model_apps import apps
+
 
 class App:
     def __init__(self, id, consumption_CPU = 0, consumption_BW = 0, consumption_run = 0, consumption_start = 0, distribution = lambda x: 0) -> None:
@@ -105,10 +103,12 @@ class Infra():
 
     def addRequests(self, requests : np.ndarray[int], distribution : list[float]):
         if np.sum(requests) == 0: return 
-        request = np.random.choice(range(len(apps)), p=requests/np.sum(requests))
-        requests[request] -= 1
         
-        while np.sum(requests) > 0:
+        requests_c = requests.copy()
+        request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
+        requests_c[request] -= 1
+        
+        while np.sum(requests_c) > 0:
             pm_id = 0
             if np.sum(distribution[request]) == 0:
                 pm_id = np.random.choice(range(self.getInfraSize()))
@@ -116,7 +116,7 @@ class Infra():
                 pm_id = np.random.choice(range(self.getInfraSize()), p=distribution[request]/np.sum(distribution[request]))
             self._infra[pm_id].addRequest(apps[request])
 
-            request = np.random.choice(range(len(apps)), p=requests/np.sum(requests))
-            requests[request] -= 1
+            request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
+            requests_c[request] -= 1
 
             

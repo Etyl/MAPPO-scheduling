@@ -7,10 +7,6 @@ from gymnasium.spaces import Box
 
 from pettingzoo import ParallelEnv
 
-import os
-os.chdir(os.path.dirname(__file__))
-print(os.getcwd())
-
 from environment.constants import *
 from environment.model_apps import getRequests, apps
 from environment.model_infra import Infra

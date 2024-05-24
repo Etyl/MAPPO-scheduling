@@ -1,24 +1,39 @@
 import json
 from math import sin, pi
 import numpy as np
-
 import os
-os.chdir(os.path.dirname(__file__))
+
+# Get the directory of the current file
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+dname = os.path.dirname(dname)
 
 apps = []
 
-with open('../data/service.json', 'r') as file:
+# Load service data from JSON file
+with open(os.path.join(dname, 'data/service.json'), 'r') as file:
     data = json.load(file)
     for service in data:
         apps.append(service)
 
+# Function to create a distribution function for each app
+def create_distribution_func(distribution):
+    if distribution[0] == "sin":
+        A = distribution[1]
+        B = distribution[2]
+        C = distribution[3]
+        D = distribution[4]
+        return lambda x: int(A * sin(x / (2 * pi * C) + D) + B)
+    else:
+        raise ValueError("Unknown distribution type")
+
+# Assign a unique distribution function to each app
 for app in apps:
-    if app["distribution"][0] == "sin":
-        app["distributionFunc"] = lambda x: int(app["distribution"][1]*sin(x/(2*pi*app["distribution"][3])+app["distribution"][4])+app["distribution"][2])
+    app["distributionFunc"] = create_distribution_func(app["distribution"])
 
 print("INIT SERVICE DATA")
 
-def getRequests(time : int) -> list[int]:
+def getRequests(time: int) -> list[int]:
     """
     Params:
         time : int : time of simulation
@@ -27,5 +42,5 @@ def getRequests(time : int) -> list[int]:
     """
     requests = np.zeros(len(apps))
     for app in apps:
-        requests[app["id"]] = app["distributionFunc"](time)
+        requests[app["id"]] = int(max(0, app["distributionFunc"](time)))
     return requests
