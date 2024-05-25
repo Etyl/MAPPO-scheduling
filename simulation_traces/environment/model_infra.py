@@ -70,11 +70,11 @@ class PM:
 
 class SBC(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 1000000, 10000, 2, 4)
+        super().__init__(id, apps, 100000000, 1000000, 2, 4)
 
 class Cloud(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 1000000, 1000000, 100, 1000)
+        super().__init__(id, apps, 10000000, 10000000, 100, 1000)
 
 
 class Infra():
@@ -91,10 +91,10 @@ class Infra():
         return 0
     
     def getLoadCPU(self):
-        return [pm.CPU_load for pm in self._infra]
+        return [pm.CPU_load/pm.CPU for pm in self._infra]
     
     def getLoadBW(self):
-        return [pm.BW_load for pm in self._infra]
+        return [pm.BW_load/pm.BW for pm in self._infra]
     
     def getQoS_penalty(self):
         QoS_penalty = 0
@@ -116,7 +116,7 @@ class Infra():
             fast : bool : if False, the requests are added one by one, otherwise all at once"""
         
         distribution = np.array(distribution)
-        distribution -= 0.1
+        distribution -= 0.1 # TODO hyperparameter
         distribution[distribution < 0] = 0
         for i in range(len(distribution)):
             if np.sum(distribution[i]) <= 0:

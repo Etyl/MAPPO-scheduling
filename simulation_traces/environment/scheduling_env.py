@@ -129,7 +129,7 @@ class SchedulingEnv(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
-        return Box(low=0,high=2**60,shape=(2*N_INFRA + 1,),dtype=int)
+        return Box(low=0,high=2**60,shape=(3*N_INFRA + 1,),dtype=int)
 
     # Action space should be defined here.
     @functools.lru_cache(maxsize=None)

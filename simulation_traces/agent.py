@@ -90,14 +90,14 @@ if __name__ == "__main__":
         f.write("episode-return, value-loss, policy-loss, old-approx-kl, approx-kl, clip-fraction, explained-variance\n")
 
     """ALGO PARAMS"""
-    device = "cpu" # torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu" #torch.device("cuda" if torch.cuda.is_available() else "cpu")
     ent_coef = 0.1
     vf_coef = 0.1
     clip_coef = 0.1
-    gamma = 0.99
+    gamma = 1.0
     batch_size = 32
-    max_cycles = 200
-    total_episodes = 1000
+    max_cycles = 100
+    total_episodes = 10
 
     """ ENV SETUP """
     env = SchedulingEnv()
