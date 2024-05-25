@@ -33,6 +33,15 @@ class PM:
         self.currentApps = [0]*len(apps)
         self.lastApps = [0]*len(apps)
 
+    
+    def startupCost(self):
+        for id, (app, old_app) in enumerate(zip(self.currentApps, self.lastApps)):
+            if app != 0:
+                self.CPU_load += self.apps[id]["consumption_run"]
+                if old_app != 0:
+                    self.CPU_load += self.apps[id]["consumption_start"]
+
+    
     def powerUsage(self):
         if self.CPU_load == 0 and self.BW_load == 0:
             return 0
@@ -40,11 +49,7 @@ class PM:
         energy = self.consumption_idle
         energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(TIME_PERIOD*self.CPU)) + 0.2*(self.BW_load/(TIME_PERIOD*self.BW)))
 
-        for id, (app, old_app) in enumerate(zip(self.currentApps, self.lastApps)):
-            if app != 0:
-                energy += self.apps[id]["consumption_run"]
-                if old_app != 0:
-                    energy += self.apps[id]["consumption_start"]
+        
 
         return energy
     
@@ -70,7 +75,7 @@ class PM:
 
 class SBC(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 100000000, 1000000, 2, 4)
+        super().__init__(id, apps, 1000000, 10000, 2, 4)
 
 class Cloud(PM):
     def __init__(self, id, apps) -> None:
@@ -79,7 +84,7 @@ class Cloud(PM):
 
 class Infra():
     def __init__(self) -> None:
-        self._infra = [SBC(i,apps) for i in range(2)]
+        self._infra : list[PM] = [SBC(i,apps) for i in range(2)]
 
     def getInfraSize(self) -> int:
         return len(self._infra)
@@ -150,5 +155,8 @@ class Infra():
             for app in range(len(distribution_int)):
                 for pm in range(len(distribution_int[app])):
                     self._infra[pm].addRequests(apps[app], distribution_int[app][pm])
+
+        for pm in self._infra:
+            pm.startupCost()
 
             
