@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
 
-    use_saved_model = False
+    use_saved_model = True
 
     save_file_learning = "./data/learning.csv"
     save_file_results = "./data/results.csv"
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     gamma = 1.0
     batch_size = 32
     max_cycles = 100
-    total_episodes = 10
+    total_episodes = 1000
 
     """ ENV SETUP """
     env = SchedulingEnv()
