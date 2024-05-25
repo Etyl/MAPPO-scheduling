@@ -23,7 +23,7 @@ class Agent(nn.Module):
         self.actor = self._layer_init(nn.Linear(32, num_actions), std=0.01)
         self.critic = self._layer_init(nn.Linear(32, 1))
 
-        self.cov_var = torch.full(size=(num_actions,), fill_value=1.)
+        self.cov_var = torch.full(size=(num_actions,), fill_value=.1)
   
         # Create the covariance matrix
         self.cov_mat = torch.diag(self.cov_var).to(device)
@@ -82,6 +82,8 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
 
+    use_saved_model = False
+
     save_file_learning = "./data/learning.csv"
     save_file_results = "./data/results.csv"
     with open(save_file_learning, "w") as f:
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     gamma = 0.99
     batch_size = 32
     max_cycles = 200
-    total_episodes = 5
+    total_episodes = 1000
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -103,8 +105,13 @@ if __name__ == "__main__":
     num_actions = env.action_space(env.possible_agents[0]).shape[0]
     observation_size = env.observation_space(env.possible_agents[0]).shape
 
+
     """ LEARNER SETUP """
     agent = Agent(num_actions=num_actions).to(device)
+     # Load the saved agent
+    if os.path.exists("./data/agent.pth") and use_saved_model:
+        agent.load_state_dict(torch.load("./data/agent.pth"))
+    
     optimizer = optim.Adam(agent.parameters(), lr=0.001, eps=1e-5)
 
     """ ALGO LOGIC: EPISODE STORAGE"""
@@ -191,7 +198,7 @@ if __name__ == "__main__":
                     b_obs[batch_index], b_actions.long()[batch_index]
                 )
                 logratio = newlogprob - b_logprobs[batch_index]
-                ratio = logratio.exp() # TODO get ratio from logprob
+                ratio = logratio.exp()
 
                 with torch.no_grad():
                     # calculate approx_kl http://joschu.net/blog/kl-approx.html
@@ -241,6 +248,11 @@ if __name__ == "__main__":
             f.write(
                 f"{np.mean(total_episodic_return)}, {v_loss.item()}, {pg_loss.item()}, {old_approx_kl.item()}, {approx_kl.item()}, {np.mean(clip_fracs)}, {explained_var.item()}\n"
             )
+
+    """ SAVE THE MODEL """
+
+    torch.save(agent.state_dict(), "./data/agent.pth")
+
 
     """ RENDER THE POLICY """
     env = SchedulingEnv()

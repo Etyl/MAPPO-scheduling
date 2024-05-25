@@ -115,6 +115,14 @@ class Infra():
             distribution : list[list[float]] : distribution of requests for each app over the infrastructure
             fast : bool : if False, the requests are added one by one, otherwise all at once"""
         
+        distribution = np.array(distribution)
+        distribution -= 0.1
+        distribution[distribution < 0] = 0
+        for i in range(len(distribution)):
+            if np.sum(distribution[i]) <= 0:
+                distribution[i] = np.ones(len(distribution[i]))
+        distribution /= np.sum(distribution, axis=1)[:,None]
+        
         if not fast:
             if np.sum(requests) == 0: return 
             
@@ -134,7 +142,7 @@ class Infra():
                 requests_c[request] -= 1
         
         else:
-            distribution_int = np.array(distribution)
+            distribution_int = distribution[:,:]
             for i,requests in enumerate(requests):
                 distribution_int[i] *= requests
             distribution_int = np.rint(distribution_int).astype(int)

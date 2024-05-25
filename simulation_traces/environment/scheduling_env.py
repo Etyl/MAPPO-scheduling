@@ -74,7 +74,7 @@ class SchedulingEnv(ParallelEnv):
         self.infra.addRequests(self.requests, distribution)
 
         reward = (
-            - self.infra.getPowerUsage() 
+            - self.infra.getPowerUsage()
             - LAMBDA*self.infra.getQoS()
             - np.exp(LAMBDA_2*self.infra.getQoS_penalty())) 
 
