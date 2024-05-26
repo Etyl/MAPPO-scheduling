@@ -41,6 +41,8 @@ class PM:
                 if old_app != 0:
                     self.CPU_load += self.apps[id]["consumption_start"]
 
+        self.lastApps = self.currentApps.copy()
+
     
     def powerUsage(self):
         if self.CPU_load == 0 and self.BW_load == 0:
@@ -49,7 +51,15 @@ class PM:
         energy = self.consumption_idle
         energy += (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(TIME_PERIOD*self.CPU)) + 0.2*(self.BW_load/(TIME_PERIOD*self.BW)))
 
+        return energy
+    
+    def powerUsageNormalized(self, totalRequests):
+        if self.CPU_load == 0 and self.BW_load == 0:
+            return 0
         
+        energy = (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(TIME_PERIOD*self.CPU)) + 0.2*(self.BW_load/(TIME_PERIOD*self.BW)))
+        energy /= totalRequests
+        energy += self.consumption_idle
 
         return energy
     
@@ -92,6 +102,12 @@ class Infra():
     def getPowerUsage(self):
         return sum([pm.powerUsage() for pm in self._infra])
     
+    def getNormalizedPowerUsage(self, totalRequests):
+        return np.mean([pm.powerUsageNormalized(totalRequests)/pm.consumption_max for pm in self._infra])
+    
+    def getMaxPower(self):
+        return sum([pm.consumption_max for pm in self._infra])
+    
     def getQoS(self):
         return 0
     
@@ -121,7 +137,7 @@ class Infra():
             fast : bool : if False, the requests are added one by one, otherwise all at once"""
         
         distribution = np.array(distribution)
-        distribution -= 0.1 # TODO hyperparameter
+        distribution -= 0.2 # TODO hyperparameter
         distribution[distribution < 0] = 0
         for i in range(len(distribution)):
             if np.sum(distribution[i]) <= 0:

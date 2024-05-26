@@ -73,10 +73,13 @@ class SchedulingEnv(ParallelEnv):
         self.infra.resetLoad()
         self.infra.addRequests(self.requests, distribution)
 
-        reward = (
-            - self.infra.getPowerUsage()
-            - LAMBDA*self.infra.getQoS()
-            - np.exp(LAMBDA_2*self.infra.getQoS_penalty())) 
+        # Reward calculation
+
+        power = self.infra.getNormalizedPowerUsage(np.sum(self.requests))
+        qos = self.infra.getQoS() / TIME_PERIOD
+        qos_penalty = self.infra.getQoS_penalty() / TIME_PERIOD
+        
+        reward = (1.)*(1-power) + (0)*(1-qos) + (0)*(1-qos_penalty)
 
         rewards = {a: reward for a in self.agents}   
         
@@ -129,7 +132,7 @@ class SchedulingEnv(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
-        return Box(low=0,high=2**60,shape=(3*N_INFRA + 1,),dtype=int)
+        return Box(low=0,high=2**30,shape=(3*N_INFRA + 1,),dtype=float)
 
     # Action space should be defined here.
     @functools.lru_cache(maxsize=None)
