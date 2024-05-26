@@ -6,5 +6,21 @@
         "consumption_run" : 100000, 
         "consumption_start" : 100000,
         "distribution" : ["sin", 20, 24, 1, 0]
+    },
+    {
+        "id" : 1,
+        "consumption_CPU" : 1000, 
+        "consumption_BW" : 10, 
+        "consumption_run" : 100000, 
+        "consumption_start" : 100000,
+        "distribution" : ["sin", 12, 17, 1, 29]
+    },
+    {
+        "id" : 2,
+        "consumption_CPU" : 1000, 
+        "consumption_BW" : 10, 
+        "consumption_run" : 100000, 
+        "consumption_start" : 100000,
+        "distribution" : ["sin", 6, 3, 1, 39]
     }
 ]

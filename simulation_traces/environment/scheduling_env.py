@@ -90,7 +90,7 @@ class SchedulingEnv(ParallelEnv):
         
         # reward for divergence from last action
         if self.last_actions is not None:
-            rewards = {a: rewardGlobal + 1-np.mean(np.abs(actions[a] - self.last_actions[a])) for a in self.agents}
+            rewards = {a: rewardGlobal + 1-np.mean((actions[a] - self.last_actions[a])**2) for a in self.agents}
         else:
             rewards = {a: rewardGlobal + 0.5 for a in self.agents}
 
