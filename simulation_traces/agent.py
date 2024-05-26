@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
 
-    use_saved_model = True
+    use_saved_model = False
 
     save_file_learning = "./data/learning.csv"
     save_file_results = "./data/results.csv"
@@ -95,9 +95,9 @@ if __name__ == "__main__":
     vf_coef = 0.1
     clip_coef = 0.1
     gamma = 1.0
-    batch_size = 20
-    max_cycles = 100
-    total_episodes = 1000
+    batch_size = 10
+    max_cycles = 10
+    total_episodes = 1500
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         # Optimizing the policy and value network
         b_index = np.arange(len(b_obs))
         clip_fracs = []
-        for repeat in range(5):
+        for repeat in range(3):
             # shuffle the indices we use to access the data
             np.random.shuffle(b_index)
             for start in range(0, len(b_obs), batch_size):
@@ -281,11 +281,11 @@ if __name__ == "__main__":
                 step += 1
                 total_obs.append(obs.cpu().numpy())
                 total_actions.append(actions.cpu().numpy())
-                total_rewards.append(rewards["0"])
+                total_rewards.append(list(rewards.values()))
 
     with open(save_file_results, "w") as f:
         for (obs, actions, reward) in zip(total_obs, total_actions,total_rewards):
             line =  ",".join(str(x) for x in obs.flatten()) + "," 
             line += ",".join(str(x) for x in actions.flatten()) + "," 
-            line += str(reward) + "\n"
+            line += ",".join(str(x) for x in reward) + "\n" 
             f.write(line)

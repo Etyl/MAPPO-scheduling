@@ -118,6 +118,16 @@ class Infra():
     def getLoadBW(self):
         return [pm.BW_load/pm.BW for pm in self._infra]
     
+    def getAppReward(self, appId: int):
+        app = apps[appId]
+        wasted_CPU = 0
+        for pm in self._infra:
+            if pm.currentApps[appId]>0:
+                wasted_CPU += min(1,0.9 - (pm.CPU_load) / (pm.CPU*TIME_PERIOD))
+
+        return 1 - wasted_CPU/self.getInfraSize()
+
+    
     def getQoS_penalty(self):
         QoS_penalty = 0
         for pm in self._infra:
