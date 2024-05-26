@@ -1,6 +1,6 @@
 import numpy as np
 
-from environment.constants import TIME_PERIOD
+from environment.constants import TIME_PERIOD, ENERGY_REQUEST_RATIO
 from environment.model_apps import apps
 
 
@@ -59,6 +59,7 @@ class PM:
         
         energy = (self.consumption_max-self.consumption_idle)*(0.8*(self.CPU_load/(TIME_PERIOD*self.CPU)) + 0.2*(self.BW_load/(TIME_PERIOD*self.BW)))
         energy /= totalRequests
+        energy *= ENERGY_REQUEST_RATIO
         energy += self.consumption_idle
 
         return energy

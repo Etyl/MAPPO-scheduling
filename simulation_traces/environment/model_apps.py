@@ -33,12 +33,12 @@ for app in apps:
 
 print("INIT SERVICE DATA")
 
-def getRequests(time: int) -> list[int]:
+def getRequests(time: int) -> np.ndarray[int]:
     """
     Params:
         time : int : time of simulation
     Returns:
-        requests : list[int] : array of size M corresponding to the number of requests per service
+        requests : np.ndarray[int] : array of size M corresponding to the number of requests per service
     """
     requests = np.zeros(len(apps))
     for app in apps:

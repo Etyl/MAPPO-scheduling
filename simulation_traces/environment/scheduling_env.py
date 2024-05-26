@@ -14,6 +14,8 @@ from environment.model_infra import Infra
 N_APPS = len(apps)
 N_INFRA = Infra().getInfraSize()
 
+MAX_SEARCH_REQUESTS = 200
+
 class SchedulingEnv(ParallelEnv):
     """The metadata holds environment constants.
 
@@ -33,6 +35,11 @@ class SchedulingEnv(ParallelEnv):
         self.timestep = 0
         self.last_actions = None
 
+        max_requests = np.zeros(N_APPS)
+        for i in range(MAX_SEARCH_REQUESTS):
+            max_requests = np.maximum(max_requests, getRequests(i))
+        self.max_requests = max_requests
+
     def reset(self, seed=None, options=None):
         """Reset set the environment to a starting point.
         And must set up the environment so that render(), step(), and observe() can be called without issues.
@@ -49,7 +56,7 @@ class SchedulingEnv(ParallelEnv):
 
         observations = {
             a: (
-                tuple(state + [0]*N_INFRA + [self.requests[int(a)]])
+                tuple(state + [0]*N_INFRA + [self.requests[int(a)]/self.max_requests[int(a)]])
             )
             for a in self.agents
         }
@@ -97,14 +104,14 @@ class SchedulingEnv(ParallelEnv):
         if self.last_actions is not None:
             observations = {
                 a: (
-                    tuple(state + list(actions[a]) + [self.requests[int(a)]])
+                    tuple(state + list(actions[a]) + [self.requests[int(a)]/self.max_requests[int(a)]])
                 )
                 for a in self.agents
             }
         else:
             observations = {
                 a: (
-                    tuple(state + [0]*N_INFRA + [self.requests[int(a)]])
+                    tuple(state + [0]*N_INFRA + [self.requests[int(a)]/self.max_requests[int(a)]])
                 )
                 for a in self.agents
             }
@@ -132,7 +139,7 @@ class SchedulingEnv(ParallelEnv):
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
         # gymnasium spaces are defined and documented here: https://gymnasium.farama.org/api/spaces/
-        return Box(low=0,high=2**30,shape=(3*N_INFRA + 1,),dtype=float)
+        return Box(low=0,high=1,shape=(3*N_INFRA + 1,),dtype=float)
 
     # Action space should be defined here.
     @functools.lru_cache(maxsize=None)

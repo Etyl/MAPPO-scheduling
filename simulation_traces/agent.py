@@ -95,9 +95,9 @@ if __name__ == "__main__":
     vf_coef = 0.1
     clip_coef = 0.1
     gamma = 1.0
-    batch_size = 32
+    batch_size = 20
     max_cycles = 100
-    total_episodes = 500
+    total_episodes = 1000
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         # Optimizing the policy and value network
         b_index = np.arange(len(b_obs))
         clip_fracs = []
-        for repeat in range(3):
+        for repeat in range(5):
             # shuffle the indices we use to access the data
             np.random.shuffle(b_index)
             for start in range(0, len(b_obs), batch_size):
@@ -271,7 +271,7 @@ if __name__ == "__main__":
             terms = [False]
             truncs = [False]
             step = 0
-            while not any(terms) and not any(truncs) and step < 200:
+            while not any(terms) and not any(truncs) and step < 100:
                 actions, logprobs, _, values = agent.get_action_and_value(obs)
                 obs, rewards, terms, truncs, infos = env.step(unbatchify(actions, env))
                 obs = batchify_obs(obs, device)
