@@ -95,7 +95,7 @@ class Cloud(PM):
 
 class Infra():
     def __init__(self) -> None:
-        self._infra : list[PM] = [SBC(i,apps) for i in range(2)]
+        self._infra : list[PM] = [SBC(i,apps) for i in range(4)]
 
     def getInfraSize(self) -> int:
         return len(self._infra)
@@ -198,15 +198,17 @@ class Infra():
         requests_c = requests.copy()
         request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
         requests_c[request] -= 1
+
+        priority_c = priority.copy()
         
         while np.sum(requests_c) > 0:
             pm_id = -1
             while pm_id == -1:
-                pm_id = np.argmax(priority[request])
+                pm_id = np.argmax(priority_c[request])
                 if self._infra[pm_id].CPU_load > 0.9*self._infra[pm_id].CPU*TIME_PERIOD:
-                    priority[request][pm_id] = 0
+                    priority_c[request][pm_id] = -1
                     pm_id = -1
-                if np.sum(priority) == 0:
+                if np.sum(priority_c) == -len(priority_c):
                     pm_id = np.random.randint(self.getInfraSize())
             
             self._infra[pm_id].addRequest(apps[request])

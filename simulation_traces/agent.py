@@ -15,13 +15,13 @@ class Agent(nn.Module):
         super().__init__()
 
         self.network = nn.Sequential(
-            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 32)), 
-            nn.LeakyReLU(),
-            self._layer_init(nn.Linear(32, 32)),
-            nn.LeakyReLU(),
+            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 64)), 
+            nn.ReLU(),
+            self._layer_init(nn.Linear(64, 64)),
+            nn.ReLU(),
         )
-        self.actor = self._layer_init(nn.Linear(32, num_actions), std=0.01)
-        self.critic = self._layer_init(nn.Linear(32, 1))
+        self.actor = self._layer_init(nn.Linear(64, num_actions), std=0.01)
+        self.critic = self._layer_init(nn.Linear(64, 1))
 
         self.cov_var = torch.full(size=(num_actions,), fill_value=.1)
   
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
 
-    use_saved_model = True
+    use_saved_model = False
 
     save_file_learning = "./data/learning.csv"
     save_file_results = "./data/results.csv"

@@ -87,14 +87,16 @@ class SchedulingEnv(ParallelEnv):
         qos_penalty = self.infra.getQoS_penalty() / TIME_PERIOD
         
         rewardGlobal = (1.)*(1-power) + (0)*(1-qos) + (0)*(1-qos_penalty)
+
         
         # reward for divergence from last action
         if self.last_actions is not None:
-            rewards = {a: rewardGlobal + 1-np.mean((actions[a] - self.last_actions[a])**2) for a in self.agents}
+            divergenceReward = [1-np.mean((actions[a] - self.last_actions[a])**2) for a in self.agents]
+            rewards = {a: (0.7)*rewardGlobal + (0.3)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
         else:
-            rewards = {a: rewardGlobal + 0.5 for a in self.agents}
+            rewards = {a: (0.7)*rewardGlobal + (0.3)*0.5 for a in self.agents}
 
-        rewards = {a: rewards[a]/2 for a in self.agents}
+        #rewards = {a: rewards[a]/2 for a in self.agents}
         
         # reward from utilization of infrastructure
         # rewards = {a: self.infra.getAppReward(int(a)) for a in self.agents} 
