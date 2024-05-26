@@ -97,7 +97,7 @@ if __name__ == "__main__":
     gamma = 1.0
     batch_size = 10
     max_cycles = 10
-    total_episodes = 1500
+    total_episodes = 1000
 
     """ ENV SETUP """
     env = SchedulingEnv()

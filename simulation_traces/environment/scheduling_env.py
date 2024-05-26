@@ -78,7 +78,7 @@ class SchedulingEnv(ParallelEnv):
         self.requests = getRequests(self.timestep)
 
         self.infra.resetLoad()
-        self.infra.addRequests(self.requests, distribution)
+        self.infra.addRequestsPriority(self.requests, distribution)
 
         # Reward calculation
 
@@ -90,14 +90,15 @@ class SchedulingEnv(ParallelEnv):
         
         # reward for divergence from last action
         if self.last_actions is not None:
-            rewards = {a: 1-np.mean(np.abs(actions[a] - self.last_actions[a])) for a in self.agents}
+            rewards = {a: rewardGlobal + 1-np.mean(np.abs(actions[a] - self.last_actions[a])) for a in self.agents}
         else:
-            rewards = {a: 0.5 for a in self.agents}
+            rewards = {a: rewardGlobal + 0.5 for a in self.agents}
 
+        rewards = {a: rewards[a]/2 for a in self.agents}
+        
         # reward from utilization of infrastructure
-        rewards = {a: self.infra.getAppReward(int(a)) for a in self.agents} 
+        # rewards = {a: self.infra.getAppReward(int(a)) for a in self.agents} 
 
-        rewards = {a: rewardGlobal for a in self.agents}
 
         # Check termination conditions
         terminations = {a: False for a in self.agents}

@@ -139,7 +139,7 @@ class Infra():
         for pm in self._infra:
             pm.resetLoad()
 
-    def addRequests(self, requests : np.ndarray[int], distribution : list[list[float]], fast = True):
+    def addRequests(self, requests : np.ndarray[int], distribution : list[list[float]], fast=True):
         """
         Adds requests to the infrastructure
         Params:
@@ -186,4 +186,33 @@ class Infra():
         for pm in self._infra:
             pm.startupCost()
 
+
+    def addRequestsPriority(self, requests : np.ndarray[int], priority : list[list[float]], fast=False):
+        """
+        Adds requests to the infrastructure based on the priority of the apps
+        Params:
+            requests : np.ndarray[int] : number of requests for each app
+            priority : list[list[float]] : priority of the PMs for each app
+            fast : bool : if False, the requests are added one by one, otherwise all at once"""
+
+        requests_c = requests.copy()
+        request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
+        requests_c[request] -= 1
+        
+        while np.sum(requests_c) > 0:
+            pm_id = -1
+            while pm_id == -1:
+                pm_id = np.argmax(priority[request])
+                if self._infra[pm_id].CPU_load > 0.9*self._infra[pm_id].CPU*TIME_PERIOD:
+                    priority[request][pm_id] = 0
+                    pm_id = -1
+                if np.sum(priority) == 0:
+                    pm_id = np.random.randint(self.getInfraSize())
             
+            self._infra[pm_id].addRequest(apps[request])
+
+            request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
+            requests_c[request] -= 1
+
+        for pm in self._infra:
+            pm.startupCost()
