@@ -16,9 +16,9 @@ class Agent(nn.Module):
 
         self.network = nn.Sequential(
             self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 32)), 
-            nn.ReLU(),
+            nn.LeakyReLU(),
             self._layer_init(nn.Linear(32, 32)),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
         self.actor = self._layer_init(nn.Linear(32, num_actions), std=0.01)
         self.critic = self._layer_init(nn.Linear(32, 1))
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
 
-    use_saved_model = False
+    use_saved_model = True
 
     save_file_learning = "./data/learning.csv"
     save_file_results = "./data/results.csv"
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     if os.path.exists("./data/agent.pth") and use_saved_model:
         agent.load_state_dict(torch.load("./data/agent.pth"))
     
-    optimizer = optim.Adam(agent.parameters(), lr=0.001, eps=1e-5)
+    optimizer = optim.Adam(agent.parameters(), lr=0.001, eps=1e-5, betas=(0.999,0.999))
 
     """ ALGO LOGIC: EPISODE STORAGE"""
     end_step = max_cycles
