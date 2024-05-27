@@ -187,34 +187,74 @@ class Infra():
             pm.startupCost()
 
 
-    def addRequestsPriority(self, requests : np.ndarray[int], priority : list[list[float]], fast=False):
+    def addRequestsPriority(self, requests : np.ndarray[int], priority : list[list[float]], fast=True):
         """
         Adds requests to the infrastructure based on the priority of the apps
         Params:
             requests : np.ndarray[int] : number of requests for each app
             priority : list[list[float]] : priority of the PMs for each app
             fast : bool : if False, the requests are added one by one, otherwise all at once"""
-
-        requests_c = requests.copy()
-        request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
-        requests_c[request] -= 1
-
         priority_c = priority.copy()
-        
-        while np.sum(requests_c) > 0:
-            pm_id = -1
-            while pm_id == -1:
-                pm_id = np.argmax(priority_c[request])
-                if self._infra[pm_id].CPU_load > 0.9*self._infra[pm_id].CPU*TIME_PERIOD:
-                    priority_c[request][pm_id] = -1
-                    pm_id = -1
-                if np.sum(priority_c) == -len(priority_c):
-                    pm_id = np.random.randint(self.getInfraSize())
-            
-            self._infra[pm_id].addRequest(apps[request])
+        requests_c = requests.copy()
+
+
+        if not fast:
 
             request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
             requests_c[request] -= 1
+      
+            while np.sum(requests_c) > 0:
+                pm_id = -1
+                while pm_id == -1:
+                    pm_id = np.argmax(priority_c[request])
+                    if self._infra[pm_id].CPU_load > 0.9*self._infra[pm_id].CPU*TIME_PERIOD:
+                        priority_c[request][pm_id] = -1
+                        pm_id = -1
+                    if np.sum(priority_c) == -len(priority_c):
+                        pm_id = np.random.randint(self.getInfraSize())
+                
+                self._infra[pm_id].addRequest(apps[request])
 
-        for pm in self._infra:
-            pm.startupCost()
+                request = np.random.choice(range(len(apps)), p=requests_c/np.sum(requests_c))
+                requests_c[request] -= 1
+            
+            for pm in self._infra:
+                pm.startupCost()
+
+        else:
+            
+            while np.sum(requests_c) > 0:
+                requested_pms = [[] for _ in range(self.getInfraSize())]
+                
+                for appId in range(len(priority)):
+                    if requests_c[appId] == 0: 
+                        continue
+                    pm_id = -1
+                    while pm_id == -1:
+                        pm_id = np.argmax(priority_c[appId])
+                        if self._infra[pm_id].CPU_load >= 0.9*self._infra[pm_id].CPU*TIME_PERIOD:
+                            priority_c[appId][pm_id] = -1
+                            pm_id = -1
+                        if np.sum(priority_c) == -len(priority_c):
+                            pm_id = np.random.randint(self.getInfraSize())
+                    
+                    requested_pms[pm_id].append(appId)
+                
+                for pmId in range(self.getInfraSize()):
+                    if len(requested_pms[pmId]) == 0:
+                        continue
+                    total_requests = sum([requests_c[appId] for appId in requested_pms[pmId]])
+                    max_requests = 0.9*self._infra[pmId].CPU*TIME_PERIOD/apps[requested_pms[pmId][0]]["consumption_CPU"]
+                    max_requests = int(max_requests)
+                    for appId in requested_pms[pmId]:
+                        if total_requests > max_requests:
+                            handled_requests = int(round(requests_c[appId]*max_requests/total_requests))
+                        else:
+                            handled_requests = requests_c[appId]
+                        requests_c[appId] -= handled_requests 
+                        self._infra[pmId].addRequests(apps[appId], handled_requests)
+
+            for pm in self._infra:
+                pm.startupCost()
+
+        
