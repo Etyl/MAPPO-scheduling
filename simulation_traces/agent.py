@@ -15,15 +15,15 @@ class Agent(nn.Module):
         super().__init__()
 
         self.network = nn.Sequential(
-            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 64)), 
+            self._layer_init(nn.Linear(OBSERVATION_SPACE_SIZE, 128)), 
             nn.ReLU(),
-            self._layer_init(nn.Linear(64, 64)),
+            self._layer_init(nn.Linear(128, 128)),
             nn.ReLU(),
         )
-        self.actor = self._layer_init(nn.Linear(64, num_actions), std=0.01)
-        self.critic = self._layer_init(nn.Linear(64, 1))
+        self.actor = self._layer_init(nn.Linear(128, num_actions), std=0.01)
+        self.critic = self._layer_init(nn.Linear(128, 1))
 
-        self.cov_var = torch.full(size=(num_actions,), fill_value=.1)
+        self.cov_var = torch.full(size=(num_actions,), fill_value=.01)
   
         # Create the covariance matrix
         self.cov_mat = torch.diag(self.cov_var).to(device)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     gamma = 1.0
     batch_size = 10
     max_cycles = 10
-    total_episodes = 1000
+    total_episodes = 10000
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     if os.path.exists("./data/agent.pth") and use_saved_model:
         agent.load_state_dict(torch.load("./data/agent.pth"))
     
-    optimizer = optim.Adam(agent.parameters(), lr=0.0001, eps=1e-5, betas=(0.999,0.999))
+    optimizer = optim.Adam(agent.parameters(), lr=0.001, eps=1e-5, betas=(0.999,0.999))
 
     """ ALGO LOGIC: EPISODE STORAGE"""
     end_step = max_cycles

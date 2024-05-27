@@ -91,10 +91,10 @@ class SchedulingEnv(ParallelEnv):
         
         # reward for divergence from last action
         if self.last_actions is not None:
-            divergenceReward = [1-np.max((actions[a] - self.last_actions[a])**2) for a in self.agents]
-            rewards = {a: (0.7)*rewardGlobal + (0.3)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
+            divergenceReward = [1-np.max(np.abs((actions[a] - self.last_actions[a]))) for a in self.agents]
+            rewards = {a: (0.6)*rewardGlobal + (0.4)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
         else:
-            rewards = {a: (0.7)*rewardGlobal + (0.3)*0.5 for a in self.agents}
+            rewards = {a: (0.6)*rewardGlobal + (0.4)*0.5 for a in self.agents}
         
         # reward from utilization of infrastructure
         # rewards = {a: self.infra.getAppReward(int(a)) for a in self.agents} 
