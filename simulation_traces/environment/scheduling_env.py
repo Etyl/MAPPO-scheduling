@@ -103,7 +103,7 @@ class SchedulingEnv(ParallelEnv):
         # Check termination conditions
         terminations = {a: False for a in self.agents}
         
-        # Check truncation conditions (overwrites termination conditions) TODO
+        # Check truncation conditions (overwrites termination conditions)
         truncations = {a: False for a in self.agents}
 
         # Reset observations 

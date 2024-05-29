@@ -96,8 +96,8 @@ if __name__ == "__main__":
     clip_coef = 0.1
     gamma = 1.0
     batch_size = 10
-    max_cycles = 10
-    total_episodes = 10000
+    max_cycles = 100
+    total_episodes = 1000
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -264,14 +264,13 @@ if __name__ == "__main__":
     total_rewards = []
 
     with torch.no_grad():
-        # render 5 episodes out
         for episode in range(1):
             obs, infos = env.reset(seed=None)
             obs = batchify_obs(obs, device)
             terms = [False]
             truncs = [False]
             step = 0
-            while not any(terms) and not any(truncs) and step < 100:
+            while not any(terms) and not any(truncs) and step < 1000:
                 actions, logprobs, _, values = agent.get_action_and_value(obs)
                 obs, rewards, terms, truncs, infos = env.step(unbatchify(actions, env))
                 obs = batchify_obs(obs, device)

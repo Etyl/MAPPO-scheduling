@@ -90,12 +90,12 @@ class SBC(PM):
 
 class Cloud(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 10000000, 10000000, 100, 1000)
+        super().__init__(id, apps, 10000000, 100000, 100, 200)
 
 
 class Infra():
     def __init__(self) -> None:
-        self._infra : list[PM] = [SBC(i,apps) for i in range(4)]
+        self._infra : list[PM] = [Cloud(0,apps)] + [SBC(i,apps) for i in range(1,5)]
 
     def getInfraSize(self) -> int:
         return len(self._infra)
@@ -148,7 +148,7 @@ class Infra():
             fast : bool : if False, the requests are added one by one, otherwise all at once"""
         
         distribution = np.array(distribution)
-        distribution -= 0.2 # TODO hyperparameter
+        distribution -= 0.2
         distribution[distribution < 0] = 0
         for i in range(len(distribution)):
             if np.sum(distribution[i]) <= 0:

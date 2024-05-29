@@ -11,7 +11,7 @@ dname = os.path.dirname(dname)
 apps = []
 
 # Load service data from JSON file
-with open(os.path.join(dname, 'data/service.json'), 'r') as file:
+with open(os.path.join(dname, 'data/service-poisson.json'), 'r') as file:
     data = json.load(file)
     for service in data:
         apps.append(service)
@@ -24,6 +24,11 @@ def create_distribution_func(distribution):
         C = distribution[3]
         D = distribution[4]
         return lambda x: int(A * sin(x / (2 * pi * C) + D) + B)
+    
+    elif distribution[0] == "poisson":
+        A = distribution[1]
+        return lambda x: np.random.poisson(A)
+    
     else:
         raise ValueError("Unknown distribution type")
 
@@ -44,3 +49,7 @@ def getRequests(time: int) -> np.ndarray[int]:
     for app in apps:
         requests[app["id"]] = int(max(0, app["distributionFunc"](time)))
     return requests
+
+
+
+# TODO poisson distribution
