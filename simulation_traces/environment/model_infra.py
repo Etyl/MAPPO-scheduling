@@ -90,7 +90,7 @@ class SBC(PM):
 
 class Cloud(PM):
     def __init__(self, id, apps) -> None:
-        super().__init__(id, apps, 10000000, 100000, 100, 200)
+        super().__init__(id, apps, 100000000, 100000, 100, 200)
 
 
 class Infra():
@@ -104,7 +104,7 @@ class Infra():
         return sum([pm.powerUsage() for pm in self._infra])
     
     def getNormalizedPowerUsage(self, totalRequests):
-        return np.mean([pm.powerUsageNormalized(totalRequests)/pm.consumption_max for pm in self._infra])
+        return np.sum([pm.powerUsageNormalized(totalRequests) for pm in self._infra])/np.sum([pm.consumption_max for pm in self._infra])
     
     def getMaxPower(self):
         return sum([pm.consumption_max for pm in self._infra])

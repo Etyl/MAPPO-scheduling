@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
+
 from torch.distributions.categorical import Categorical
 from torch.distributions import MultivariateNormal
 import os
@@ -23,7 +25,7 @@ class Agent(nn.Module):
         self.actor = self._layer_init(nn.Linear(128, num_actions), std=0.01)
         self.critic = self._layer_init(nn.Linear(128, 1))
 
-        self.cov_var = torch.full(size=(num_actions,), fill_value=.01)
+        self.cov_var = torch.full(size=(num_actions,), fill_value=1.)
   
         # Create the covariance matrix
         self.cov_mat = torch.diag(self.cov_var).to(device)
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     vf_coef = 0.1
     clip_coef = 0.1
     gamma = 1.0
-    batch_size = 10
+    batch_size = 20
     max_cycles = 100
     total_episodes = 1000
 
@@ -112,7 +114,8 @@ if __name__ == "__main__":
     if os.path.exists("./data/agent.pth") and use_saved_model:
         agent.load_state_dict(torch.load("./data/agent.pth"))
     
-    optimizer = optim.Adam(agent.parameters(), lr=0.001, eps=1e-5, betas=(0.999,0.999))
+    optimizer = optim.Adam(agent.parameters(), lr=.001, eps=1e-5, betas=(0.999,0.999))
+    #scheduler = lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 
     """ ALGO LOGIC: EPISODE STORAGE"""
     end_step = max_cycles
@@ -127,6 +130,8 @@ if __name__ == "__main__":
     """ TRAINING LOGIC """
     # train for n number of episodes
     for episode in tqdm.tqdm(range(total_episodes)):
+
+        agent.cov_mat = max((1-1.5*episode/total_episodes),0.001) * torch.diag(agent.cov_var).to(device)
         # collect an episode
         with torch.no_grad():
             # collect observations and convert to batch of torch tensors
@@ -239,6 +244,7 @@ if __name__ == "__main__":
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                #scheduler.step()
 
         y_pred, y_true = b_values.cpu().numpy(), b_returns.cpu().numpy()
         var_y = np.var(y_true)
