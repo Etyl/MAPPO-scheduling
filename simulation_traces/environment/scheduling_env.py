@@ -127,7 +127,8 @@ class SchedulingEnv(ParallelEnv):
             }
 
         # Get dummy infos (not used in this example)
-        infos = {a: {} for a in self.agents}
+        infos = {}
+        infos["appLoad"] = self.infra.getAppLoad()
 
         if any(terminations.values()) or all(truncations.values()):
             self.agents = []
