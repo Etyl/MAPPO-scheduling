@@ -112,6 +112,9 @@ class Infra():
     def getQoS(self):
         return 0
     
+    def getAppLoad(self):
+        return [pm.currentApps for pm in self._infra]
+    
     def getLoadCPU(self):
         return [pm.CPU_load/pm.CPU for pm in self._infra]
     
