@@ -3,24 +3,24 @@
         "id" : 0,
         "consumption_CPU" : 2000, 
         "consumption_BW" : 10, 
-        "consumption_run" : 1000, 
-        "consumption_start" : 1000,
+        "consumption_run" : 100000, 
+        "consumption_start" : 100000,
         "distribution" : ["sin", 200, 240, 10, 0]
     },
     {
         "id" : 1,
         "consumption_CPU" : 2000, 
         "consumption_BW" : 10, 
-        "consumption_run" : 1000, 
-        "consumption_start" : 1000,
+        "consumption_run" : 100000, 
+        "consumption_start" : 100000,
         "distribution" : ["sin", 120, 170, 10, 29]
     },
     {
         "id" : 2,
         "consumption_CPU" : 2000, 
         "consumption_BW" : 10, 
-        "consumption_run" : 1000, 
-        "consumption_start" : 1000,
+        "consumption_run" : 100000,
+        "consumption_start" : 100000,
         "distribution" : ["sin", 60, 30, 10, 39]
     }
 ]

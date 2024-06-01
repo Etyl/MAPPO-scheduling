@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
 
-    use_saved_model = False
+    use_saved_model = True
 
     save_file_learning = "./data/learning.csv"
     save_file_results = "./data/results.csv"
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     gamma = 1.0
     batch_size = 20
     max_cycles = 100
-    total_episodes = 2
+    total_episodes = 1000
 
     """ ENV SETUP """
     env = SchedulingEnv()
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     # train for n number of episodes
     for episode in tqdm.tqdm(range(total_episodes)):
 
-        agent.cov_mat = max((1-1.5*episode/total_episodes),0.001) * torch.diag(agent.cov_var).to(device)
+        agent.cov_mat = max((1-1.5*episode/(total_episodes-1)),0.001) * torch.diag(agent.cov_var).to(device)
         # collect an episode
         with torch.no_grad():
             # collect observations and convert to batch of torch tensors
