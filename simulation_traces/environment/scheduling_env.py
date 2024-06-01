@@ -88,13 +88,29 @@ class SchedulingEnv(ParallelEnv):
         
         rewardGlobal = (1.)*(1-power) + (0)*(1-qos) + (0)*(1-qos_penalty)
 
-        
+        divergenceReward = [0.5]*len(self.agents)
         # reward for divergence from last action
         if self.last_actions is not None:
             divergenceReward = [1-np.max(np.abs((actions[a] - self.last_actions[a]))) for a in self.agents]
-            rewards = {a: (0.6)*rewardGlobal + (0.4)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
-        else:
-            rewards = {a: (0.6)*rewardGlobal + (0.4)*0.5 for a in self.agents}
+        
+        separationReward = [0.5]*len(self.agents)
+        for k,a in enumerate(self.agents):
+            sorted_actions = sorted(actions[a])
+            S = 0
+            kmin = len(self.agents)-1
+            for i in range(len(self.agents)):
+                if sorted_actions[i] > .05: 
+                    kmin = i
+                    break
+            for i in range(kmin,len(self.agents)-1):
+                if abs(sorted_actions[i+1] - sorted_actions[i]) > 0.05:
+                    S = i+1
+                    break
+            S = min(1,S)
+            separationReward[k] = S
+
+        rewards = {a: (.6)*rewardGlobal + (0.4)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
+ 
         
         # reward from utilization of infrastructure
         # rewards = {a: self.infra.getAppReward(int(a)) for a in self.agents} 
