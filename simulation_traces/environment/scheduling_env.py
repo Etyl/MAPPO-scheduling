@@ -96,20 +96,13 @@ class SchedulingEnv(ParallelEnv):
         separationReward = [0.5]*len(self.agents)
         for k,a in enumerate(self.agents):
             sorted_actions = sorted(actions[a])
-            S = 0
-            kmin = len(self.agents)-1
-            for i in range(len(self.agents)):
-                if sorted_actions[i] > .05: 
-                    kmin = i
-                    break
-            for i in range(kmin,len(self.agents)-1):
-                if abs(sorted_actions[i+1] - sorted_actions[i]) > 0.05:
-                    S = i+1
-                    break
-            S = min(1,S)
+            S = 1
+            for i in range(len(self.agents)-1):
+                if sorted_actions[i+1] > 0.05:
+                    S = min(S,abs(sorted_actions[i+1]-sorted_actions[i]))
             separationReward[k] = S
 
-        rewards = {a: (.6)*rewardGlobal + (0.4)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
+        rewards = {a: (.7)*rewardGlobal + (0.3)*divergenceReward[i] for (i,a) in enumerate(self.agents)}
  
         
         # reward from utilization of infrastructure
