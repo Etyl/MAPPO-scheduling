@@ -269,6 +269,7 @@ if __name__ == "__main__":
     total_actions = []
     total_rewards = []
     total_infos = []
+    total_energy = []
 
     with torch.no_grad():
         for episode in range(1):
@@ -289,11 +290,13 @@ if __name__ == "__main__":
                 total_actions.append(actions.cpu().numpy())
                 total_rewards.append(list(rewards.values()))
                 total_infos.append(np.array(infos["appLoad"]))
+                total_energy.append(infos["energy"])
 
     with open(save_file_results, "w") as f:
-        for (obs, actions, reward, info) in zip(total_obs, total_actions,total_rewards,total_infos):
+        for (obs, actions, reward, info, energy) in zip(total_obs, total_actions,total_rewards,total_infos, total_energy):
             line =  ",".join(str(x) for x in obs.flatten()) + "," 
             line += ",".join(str(x) for x in actions.flatten()) + "," 
             line += ",".join(str(x) for x in info.flatten()) + ","
+            line += str(energy) + ","
             line += ",".join(str(x) for x in reward) + "\n" 
             f.write(line)
