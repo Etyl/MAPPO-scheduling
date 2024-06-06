@@ -97,7 +97,7 @@ if __name__ == "__main__":
     vf_coef = 0.1
     clip_coef = 0.1
     gamma = 1.0
-    batch_size = 20
+    batch_size = 10
     max_cycles = 100
     total_episodes = 500
 
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     # train for n number of episodes
     for episode in tqdm.tqdm(range(total_episodes)):
 
-        agent.cov_mat = max((1-1.5*episode/(total_episodes-1)),0.001) * torch.diag(agent.cov_var).to(device)
+        agent.cov_mat = max((1-1.1*episode/(total_episodes-1)),0.001) * torch.diag(agent.cov_var).to(device)
         # collect an episode
         with torch.no_grad():
             # collect observations and convert to batch of torch tensors

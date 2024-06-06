@@ -5,7 +5,7 @@
         "consumption_BW" : 10, 
         "consumption_run" : 1000, 
         "consumption_start" : 1000,
-        "distribution" : ["poisson", 1600]
+        "distribution" : ["poisson", 600]
     },
     {
         "id" : 1,
@@ -13,14 +13,14 @@
         "consumption_BW" : 10, 
         "consumption_run" : 1000, 
         "consumption_start" : 1000,
-        "distribution" : ["poisson", 1200]
+        "distribution" : ["poisson", 300]
     },
     {
         "id" : 2,
-        "consumption_CPU" : 2000, 
+        "consumption_CPU" : 2000,
         "consumption_BW" : 10, 
         "consumption_run" : 1000, 
         "consumption_start" : 1000,
-        "distribution" : ["poisson", 800]
+        "distribution" : ["poisson", 100]
     }
 ]

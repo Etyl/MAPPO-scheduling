@@ -15,21 +15,27 @@ class Scheduler:
     def __init__(self, type:str):     
         self.action = None
         if type == "random":
-            self.action = np.random.rand(N_INFRA)
-            self.action = self.action / np.sum(self.action)
+            def random_action():
+                action = np.random.rand(N_INFRA)
+                return action / np.sum(action)
+            self.action = random_action
+        
         elif type == "cloud":
-            self.action = np.zeros(N_INFRA)
-            self.action[0] = 1
+            action = np.zeros(N_INFRA)
+            action[0] = 1
+            self.action = lambda : action 
+
         elif type == "edge":
-            self.action = np.zeros(N_INFRA)
+            action = np.zeros(N_INFRA)
             for i in range(1, N_INFRA):
-                self.action[i] = 1 / (N_INFRA - 1)
-            self.action = self.action / np.sum(self.action)
+                action[i] = i / (N_INFRA - 1)
+            action = action / np.sum(action)
+            self.action = lambda : action
         else:
             raise ValueError("Invalid type of scheduler")
         
     def getAction(self):
-        return {str(a) : self.action for a in range(N_APPS)}
+        return {str(a) : self.action() for a in range(N_APPS)}
 
 
 if __name__ == "__main__":

@@ -1,0 +1,21 @@
+high-edge : 122.7987575
+high-random : 121.73534
+high-cloud : 114.7654
+high-ppo: 117.0077012
+
+high: {
+    1:1800
+    2:1300
+    3:1000
+}
+
+low: {
+    1:600
+    2:300
+    3:100
+}
+
+low-edge:9.1210
+low-cloud:103.60280
+low-random:76.3319171
+low-ppo:9.17029440
