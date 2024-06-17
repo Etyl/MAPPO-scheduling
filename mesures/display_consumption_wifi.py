@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats as stats
 
 
-bandwidths = [0,10000,15000,20000,25000,30000,40000]
+bandwidths = [0,10000,20000,30000,40000,50000,70000,80000,90000]
 consumption_avg = []
 consumption_var = []
 
 for b in bandwidths:
-    loc = "./data/consumption-wifi-" + str(b) + ".txt"
+    loc = "./data/consumption-eth-" + str(b) + ".txt"
     f = open(loc, "r")
     consumption = []
     for row in f:
@@ -18,12 +19,15 @@ for b in bandwidths:
     consumption_avg.append(sum(consumption)/len(consumption))
     consumption_var.append(np.var(consumption))
 
+
+lr = stats.linregress(bandwidths, consumption_avg)
+avg = np.array(bandwidths)
 f, ax = plt.subplots(1)
 plt.errorbar(bandwidths, consumption_avg , yerr=consumption_var, fmt='o', capsize=5, markersize=8)
+plt.plot(avg, lr.intercept + lr.slope*avg, 'r', label='fitted line')
 plt.grid()
-ax.set_ylim(ymin=0)
+ax.set_ylim(ymin=0,ymax=4.2)
+plt.legend()
 plt.xlabel("Bandwidth (kbit/s)")
 plt.ylabel("Consumption (W)")
-
-plt.savefig("./graphs/consumption-wifi-download.png")
-#plt.show()
+plt.savefig("./graphs/consumption-eth-download.svg", format="svg")

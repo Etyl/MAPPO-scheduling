@@ -77,16 +77,25 @@ for event in eventsLogged:
     f, ax = plt.subplots(1)
     plt.errorbar(events_avg[event], consumption_avg , yerr=consumption_var, fmt='o', capsize=5, markersize=8, label=event)
     plt.grid()
-    ax.set_ylim(ymin=0)
+    ax.set_ylim(ymin=0,ymax=4.2)
     plt.xlabel(event)
     plt.ylabel('Consumption (W)')
     plt.savefig(f"./graphs/perf-consumption-{event}.png")
 
 
 lr = stats.linregress(events_avg["instructions"], consumption_avg)
-print(lr)
+avg = np.array(events_avg["instructions"])
+f, ax = plt.subplots(1)
+plt.errorbar(events_avg["instructions"], consumption_avg , yerr=consumption_var, fmt='o', capsize=5, markersize=8)
+plt.plot(avg, lr.intercept + lr.slope*avg, 'r', label='fitted line')
+plt.grid()
+ax.set_ylim(ymin=0,ymax=4.2)
+plt.legend()
+plt.xlabel("instructions")
+plt.ylabel('Consumption (W)')
+plt.savefig(f"./graphs/perf-consumption-instructions-linregress.svg", format="svg")
 
-ax.set_ylim(bottom=0)
+
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')
